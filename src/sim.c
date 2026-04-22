@@ -31,7 +31,8 @@ long long pop(void) {
 }
 
 void sim_run(da_t *prog) {
-    _Static_assert(OP_COUNT == 6, "Exhaustive operator handling inside sim_run");
+    _Static_assert(OP_COUNT == 7,
+                   "Exhaustive operator handling inside sim_run");
 
     stack = da_new(long long);
 
@@ -76,6 +77,13 @@ void sim_run(da_t *prog) {
         case OP_DUMP: {
             long long val = pop();
             printf("%lld\n", val);
+            break;
+        }
+
+        case OP_DUP: {
+            long long val = pop();
+            push(val);
+            push(val);
             break;
         }
         default:

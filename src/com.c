@@ -1,6 +1,6 @@
 #include "com.h"
-#include <assert.h>
 #include "parse.h"
+#include <assert.h>
 #include <stdio.h>
 
 void append_builtins(FILE *f) {
@@ -61,7 +61,8 @@ void append_builtins(FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 6, "Exhaustive operator handling inside compile");
+    _Static_assert(OP_COUNT == 7,
+                   "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
     if (!f) {
@@ -120,6 +121,12 @@ int compile(da_t *prog) {
             fprintf(f, "    ; <OP_DUMP>\n");
             fprintf(f, "    pop rdi\n");
             fprintf(f, "    call dump\n");
+            break;
+        case OP_DUP:
+            fprintf(f, "    ; <OP_DUP>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    push rax\n");
+            fprintf(f, "    push rax\n");
             break;
         default:
             fprintf(stderr, "error: unknown Operator with value %d reached\n",

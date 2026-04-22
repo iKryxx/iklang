@@ -2,7 +2,7 @@
 #include <assert.h>
 
 const char *tok_type_name(token_type_t t) {
-    _Static_assert(TOK_COUNT == 8,
+    _Static_assert(TOK_COUNT == 9,
                    "Exhaustive handling of token types inside token_type_name");
 
     switch (t) {
@@ -18,6 +18,8 @@ const char *tok_type_name(token_type_t t) {
         return "TOK_SLASH";
     case TOK_DUMP:
         return "TOK_DUMP";
+    case TOK_DUP:
+        return "TOK_DUP";
     case TOK_EOF:
         return "TOK_EOF";
     case TOK_UNKNOWN:

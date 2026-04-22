@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 void parse(da_t *prog, const char *src) {
-    _Static_assert(TOK_COUNT == 8,
+    _Static_assert(TOK_COUNT == 9,
                    "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
@@ -38,6 +38,9 @@ void parse(da_t *prog, const char *src) {
             break;
         case TOK_DUMP:
             op.type = OP_DUMP;
+            break;
+        case TOK_DUP:
+            op.type = OP_DUP;
             break;
         case TOK_EOF:
             lexer_free(&lex);

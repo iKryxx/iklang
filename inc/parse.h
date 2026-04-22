@@ -10,6 +10,7 @@ typedef enum {
     OP_STAR,
     OP_SLASH,
     OP_DUMP,
+    OP_DUP,
     OP_COUNT
 } op_type_t;
 

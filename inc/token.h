@@ -13,6 +13,7 @@ typedef enum {
 
     /* builtins */
     TOK_DUMP, // "dump"
+    TOK_DUP,  // "dup"
 
     /* control */
     TOK_EOF,     // '-1'
