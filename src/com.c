@@ -1,0 +1,128 @@
+#include "com.h"
+#include "assert.h"
+#include "parse.h"
+#include <stdio.h>
+
+void append_builtins(FILE *f) {
+    // Dump: prints whatever is in rdi
+    {
+        fprintf(f, "; dump(rdi: uint64) -- print rdi as decimal + newline to "
+                   "stdout\n");
+        fprintf(f, "; in:  rdi\n");
+        fprintf(f, "; out: none\n");
+        fprintf(f, "; clobbers: rax, rcx, rdx, rdi, rsi, r8, r9\n");
+        fprintf(f, "dump:\n");
+        fprintf(f, "    mov r9, -3689348814741910323\n");
+        fprintf(f, "    sub rsp, 40\n");
+        fprintf(f, "    mov BYTE [rsp+31], 10\n");
+        fprintf(f, "    lea rcx, [rsp+30]\n");
+        fprintf(f, ".L2:\n");
+        fprintf(f, "    mov rax, rdi\n");
+        fprintf(f, "    lea r8, [rsp+32]\n");
+        fprintf(f, "    mul r9\n");
+        fprintf(f, "    mov rax, rdi\n");
+        fprintf(f, "    sub r8, rcx\n");
+        fprintf(f, "    shr rdx, 3\n");
+        fprintf(f, "    lea rsi, [rdx+rdx*4]\n");
+        fprintf(f, "    add rsi, rsi\n");
+        fprintf(f, "    sub rax, rsi\n");
+        fprintf(f, "    add eax, 48\n");
+        fprintf(f, "    mov BYTE [rcx], al\n");
+        fprintf(f, "    mov rax, rdi\n");
+        fprintf(f, "    mov rdi, rdx\n");
+        fprintf(f, "    mov rdx, rcx\n");
+        fprintf(f, "    sub rcx, 1\n");
+        fprintf(f, "    cmp rax, 9\n");
+        fprintf(f, "    ja .L2\n");
+        fprintf(f, "    lea rax, [rsp+32]\n");
+        fprintf(f, "    mov edi, 1\n");
+        fprintf(f, "    sub rdx, rax\n");
+        fprintf(f, "    xor eax, eax\n");
+        fprintf(f, "    lea rsi, [rsp+32+rdx]\n");
+        fprintf(f, "    mov rdx, r8\n");
+        fprintf(f, "    mov rax, 1\n");
+        fprintf(f, "    syscall\n");
+        fprintf(f, "    add rsp, 40\n");
+        fprintf(f, "    ret\n");
+    }
+}
+
+int compile(da_t *prog) {
+    assert(OP_COUNT == 6 && "Exhaustive operator handling inside compile");
+
+    FILE *f = fopen("out.tmp", "w");
+    if (!f) {
+        perror("fopen");
+        return 1;
+    }
+
+    fprintf(f, "BITS 64\n");
+    fprintf(f, "section .text\n");
+    append_builtins(f);
+    fprintf(f, "global _start\n");
+    fprintf(f, "_start:\n");
+
+    for (size_t i = 0; i < prog->length; i++) {
+        op_t *op = da_get(prog, i);
+        switch (op->type) {
+
+        case OP_PUSH_INT:
+            fprintf(f, "    ; <OP_PUSH_INT>\n");
+            fprintf(f, "    push %d\n", op->ival);
+            break;
+        case OP_PLUS:
+            fprintf(f, "    ; <OP_PLUS>\n");
+            fprintf(f, "    pop rbx\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    add rax, rbx\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_MINUS:
+            fprintf(f, "    ; <OP_MINUS>\n");
+            fprintf(f, "    pop rbx\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    sub rax, rbx\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_STAR:
+            fprintf(f, "    ; <OP_STAR>\n");
+            fprintf(f, "    pop rbx\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    imul rax, rbx\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_SLASH:
+            fprintf(f, "    ; <OP_SLASH>\n");
+            fprintf(f, "    pop rbx\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    xor rdx, rdx\n");
+            fprintf(f, "    div rbx\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_DUMP:
+            fprintf(f, "    ; <OP_DUMP>\n");
+            fprintf(f, "    pop rdi\n");
+            fprintf(f, "    call dump\n");
+            break;
+        default:
+            fprintf(stderr, "error: unknown Operator with value %d reached\n",
+                    op->type);
+            fclose(f);
+            remove("out.tmp");
+            return 1;
+        }
+    }
+
+    fprintf(f, ".ik_addr_%zu:\n", prog->length);
+    fprintf(f, "    mov rax, 60\n");
+    fprintf(f, "    mov rdi, 0\n");
+    fprintf(f, "    syscall\n");
+
+    fclose(f);
+    rename("out.tmp", "out.asm");
+
+    system("nasm -felf64 out.asm -o out.o");
+    system("ld out.o -o out");
+
+    return 0;
+}
