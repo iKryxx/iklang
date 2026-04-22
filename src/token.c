@@ -1,9 +1,9 @@
 #include "token.h"
-#include "assert.h"
+#include <assert.h>
 
 const char *tok_type_name(token_type_t t) {
-    assert(TOK_COUNT == 8 &&
-           "Exhaustive handling of token types inside token_type_name");
+    _Static_assert(TOK_COUNT == 8,
+                   "Exhaustive handling of token types inside token_type_name");
 
     switch (t) {
     case TOK_INT:

@@ -12,17 +12,18 @@ da_t stack = {0};
 
 void push(long long ival) {
     if (stack.length == STACK_SIZE) {
-        fprintf(stderr, "error: stack overflow.");
+        fprintf(stderr, "error: stack overflow\n");
+        exit(1);
     }
 
     da_push(&stack, &ival);
 }
 
-int pop() {
-    int *value = da_pop(&stack);
+long long pop(void) {
+    long long *value = da_pop(&stack);
 
     if (value == NULL) {
-        fprintf(stderr, "error: stack underflow.");
+        fprintf(stderr, "error: stack underflow\n");
         exit(1);
     }
 
@@ -30,7 +31,7 @@ int pop() {
 }
 
 void sim_run(da_t *prog) {
-    assert(OP_COUNT == 6 && "Exhaustive operator handling inside sim_run");
+    _Static_assert(OP_COUNT == 6, "Exhaustive operator handling inside sim_run");
 
     stack = da_new(long long);
 
@@ -63,6 +64,10 @@ void sim_run(da_t *prog) {
 
         case OP_SLASH: {
             long long b = pop();
+            if (b == 0) {
+                fprintf(stderr, "error: division by zero\n");
+                exit(1);
+            }
             long long a = pop();
             push(a / b);
             break;

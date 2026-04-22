@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,17 +11,28 @@ long long str_to_int(const char *str, size_t len) {
     long long retval = 0;
 
     while (*str && isdigit(*str) && len--) {
-        retval = retval * 10 + (*str++ - '0');
+        int digit = *str++ - '0';
+        if (retval > (LLONG_MAX - digit) / 10) {
+            fprintf(stderr, "error: integer literal overflow\n");
+            exit(1);
+        }
+        retval = retval * 10 + digit;
     }
 
     return retval;
 }
 
 void lexer_init(lexer_t *l, const char *src) {
-    char *buf = NULL;
-    read_entire_file(src, &buf);
-    tokenize_file(buf, src, &l->src);
+    l->buf = NULL;
+    read_entire_file(src, &l->buf);
+    tokenize_file(l->buf, src, &l->src);
     l->pos = 0;
+}
+
+void lexer_free(lexer_t *l) {
+    da_free(&l->src);
+    free(l->buf);
+    l->buf = NULL;
 }
 
 token_t lexer_next(lexer_t *l) {
@@ -35,8 +47,8 @@ token_t lexer_next(lexer_t *l) {
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
     const char *text = cur_tt.token;
 
-    assert(TOK_COUNT == 8 &&
-           "Exhaustive handling of token types inside lexer_next()");
+    _Static_assert(TOK_COUNT == 8,
+                   "Exhaustive handling of token types inside lexer_next()");
 
     if (*text == '+') {
         tok.type = TOK_PLUS;

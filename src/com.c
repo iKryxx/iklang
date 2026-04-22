@@ -1,9 +1,22 @@
 #include "com.h"
-#include "assert.h"
+#include <assert.h>
 #include "parse.h"
 #include <stdio.h>
 
 void append_builtins(FILE *f) {
+    // div_zero_err: print error and exit(1) when division by zero is detected
+    {
+        fprintf(f, "div_zero_err:\n");
+        fprintf(f, "    mov rax, 1\n");
+        fprintf(f, "    mov rdi, 2\n");
+        fprintf(f, "    lea rsi, [rel div_zero_msg]\n");
+        fprintf(f, "    mov rdx, 24\n");
+        fprintf(f, "    syscall\n");
+        fprintf(f, "    mov rax, 60\n");
+        fprintf(f, "    mov rdi, 1\n");
+        fprintf(f, "    syscall\n");
+    }
+
     // Dump: prints whatever is in rdi
     {
         fprintf(f, "; dump(rdi: uint64) -- print rdi as decimal + newline to "
@@ -48,7 +61,7 @@ void append_builtins(FILE *f) {
 }
 
 int compile(da_t *prog) {
-    assert(OP_COUNT == 6 && "Exhaustive operator handling inside compile");
+    _Static_assert(OP_COUNT == 6, "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
     if (!f) {
@@ -57,6 +70,8 @@ int compile(da_t *prog) {
     }
 
     fprintf(f, "BITS 64\n");
+    fprintf(f, "section .data\n");
+    fprintf(f, "div_zero_msg: db \"error: division by zero\", 10\n");
     fprintf(f, "section .text\n");
     append_builtins(f);
     fprintf(f, "global _start\n");
@@ -68,7 +83,7 @@ int compile(da_t *prog) {
 
         case OP_PUSH_INT:
             fprintf(f, "    ; <OP_PUSH_INT>\n");
-            fprintf(f, "    push %d\n", op->ival);
+            fprintf(f, "    push %lld\n", op->ival);
             break;
         case OP_PLUS:
             fprintf(f, "    ; <OP_PLUS>\n");
@@ -94,9 +109,11 @@ int compile(da_t *prog) {
         case OP_SLASH:
             fprintf(f, "    ; <OP_SLASH>\n");
             fprintf(f, "    pop rbx\n");
+            fprintf(f, "    test rbx, rbx\n");
+            fprintf(f, "    jz div_zero_err\n");
             fprintf(f, "    pop rax\n");
-            fprintf(f, "    xor rdx, rdx\n");
-            fprintf(f, "    div rbx\n");
+            fprintf(f, "    cqo\n");
+            fprintf(f, "    idiv rbx\n");
             fprintf(f, "    push rax\n");
             break;
         case OP_DUMP:
@@ -121,8 +138,14 @@ int compile(da_t *prog) {
     fclose(f);
     rename("out.tmp", "out.asm");
 
-    system("nasm -felf64 out.asm -o out.o");
-    system("ld out.o -o out");
+    if (system("nasm -felf64 out.asm -o out.o") != 0) {
+        fprintf(stderr, "error: nasm failed\n");
+        return 1;
+    }
+    if (system("ld out.o -o out") != 0) {
+        fprintf(stderr, "error: ld failed\n");
+        return 1;
+    }
 
     return 0;
 }
