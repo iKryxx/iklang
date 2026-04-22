@@ -1,11 +1,18 @@
 #include "da.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void da_grow(da_t *arr) {
     size_t old_cap = arr->cap;
 
     size_t new_cap = old_cap == 0 ? 10 : old_cap * 2;
-    arr->data = realloc(arr->data, new_cap * arr->stride);
+    void *new_data = realloc(arr->data, new_cap * arr->stride);
+    if (!new_data) {
+        perror("realloc");
+        exit(1);
+    }
+    arr->data = new_data;
     arr->cap = new_cap;
 }
 

@@ -6,7 +6,8 @@
 #include <stdlib.h>
 
 void parse(da_t *prog, const char *src) {
-    assert(TOK_COUNT == 8 && "Exhaustive handling of token types inside parse");
+    _Static_assert(TOK_COUNT == 8,
+                   "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
     lexer_init(&lex, src);
@@ -39,15 +40,18 @@ void parse(da_t *prog, const char *src) {
             op.type = OP_DUMP;
             break;
         case TOK_EOF:
+            lexer_free(&lex);
             return;
         default:
             text_token_t *last_tt = da_get(&lex.src, lex.pos - 1);
             fprintf(stderr, "%s:%llu:%llu: error: unknown token: %.*s\n",
                     last_tt->file_name, last_tt->row, last_tt->column,
                     last_tt->token_len, last_tt->token);
+            lexer_free(&lex);
             exit(1);
         }
 
         da_push(prog, &op);
     } while (tok.type != TOK_EOF);
+    lexer_free(&lex);
 }

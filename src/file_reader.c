@@ -1,16 +1,24 @@
 #include "file_reader.h"
 #include <stdio.h>
-
+#include <stdlib.h>
 #include <string.h>
 
 void read_entire_file(const char *path, char **out) {
     FILE *f = fopen(path, "rb");
+    if (!f) {
+        perror("fopen");
+        exit(1);
+    }
 
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
     *out = malloc(fsize + 1);
+    if (!*out) {
+        perror("malloc");
+        exit(1);
+    }
     fread(*out, fsize, 1, f);
 
     fclose(f);

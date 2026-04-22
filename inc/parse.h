@@ -1,8 +1,7 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef PARSE_H
+#define PARSE_H
 
 #include "da.h"
-#define MAX_OPS 1024
 
 typedef enum {
     OP_PUSH_INT,
@@ -16,7 +15,7 @@ typedef enum {
 
 typedef struct {
     op_type_t type;
-    int ival;
+    long long ival;
 } op_t;
 
 void parse(da_t *prog, const char *src);
