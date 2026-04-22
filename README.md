@@ -22,3 +22,8 @@ This project is heavily inspired by the fabolous works of [Alexey Kutepov](https
 
 # contributing
 Feel free to create pull requests or fork and distribute code as you want. Please consider mentioning me when you do. 
+
+# developement note
+This project uses AI-assisted static analysis and refactoring. I am open and verbose about using AI, and AI only comes to usage to:
+- Fix Bugs: instead of throughly wasting hours of searching for critical bugs in the codebase, AI has been specifically trained to do so. This not only saves time but ensures more bugs to be found and resolved. 
+- Clean up syntax: it often happens that there occur inconsistencies between applied paradigms. 
