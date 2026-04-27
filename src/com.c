@@ -3,6 +3,26 @@
 #include <assert.h>
 #include <stdio.h>
 
+static const char *comp_op_to_mov_instr(op_type_t op) {
+    switch (op) {
+
+    case OP_EQUALS:
+        return "cmove";
+    case OP_GREATER:
+        return "cmovg";
+    case OP_GREATER_EQUALS:
+        return "cmovge";
+    case OP_LESS:
+        return "cmovl";
+    case OP_LESS_EQUALS:
+        return "cmovle";
+    case OP_NOT_EQUALS:
+        return "cmovne";
+    default:
+        return "";
+    }
+}
+
 void append_builtins(FILE *f) {
     // div_zero_err: print error and exit(1) when division by zero is detected
     {
@@ -61,7 +81,7 @@ void append_builtins(FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 7,
+    _Static_assert(OP_COUNT == 15,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -117,6 +137,44 @@ int compile(da_t *prog) {
             fprintf(f, "    idiv rbx\n");
             fprintf(f, "    push rax\n");
             break;
+
+        case OP_EQUALS:
+            fprintf(f, "    ; <OP_EQUALS>\n");
+            goto comparison;
+        case OP_GREATER:
+            fprintf(f, "    ; <OP_GREATER>\n");
+            goto comparison;
+        case OP_GREATER_EQUALS:
+            fprintf(f, "    ; <OP_GREATER_EQUALS>\n");
+            goto comparison;
+        case OP_LESS:
+            fprintf(f, "    ; <OP_LESS>\n");
+            goto comparison;
+        case OP_LESS_EQUALS:
+            fprintf(f, "    ; <OP_LESS_EQUALS>\n");
+            goto comparison;
+        case OP_NOT_EQUALS:
+            fprintf(f, "    ; <OP_NOT_EQUALS>\n");
+            goto comparison;
+        comparison:
+            fprintf(f, "    xor rcx, rcx\n");
+            fprintf(f, "    mov rdx, 1\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    pop rbx\n");
+            fprintf(f, "    cmp rbx, rax\n");
+            fprintf(f, "    %s rcx, rdx\n", comp_op_to_mov_instr(op->type));
+            fprintf(f, "    push rcx\n");
+            break;
+        case OP_NOT:
+            fprintf(f, "    ; <OP_NOT>\n");
+            fprintf(f, "    xor rcx, rcx\n");
+            fprintf(f, "    mov rdx, 1\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    xor rbx, rbx\n");
+            fprintf(f, "    cmp rax, rbx\n");
+            fprintf(f, "    cmove rcx, rdx\n");
+            fprintf(f, "    push rcx\n");
+            break;
         case OP_DUMP:
             fprintf(f, "    ; <OP_DUMP>\n");
             fprintf(f, "    pop rdi\n");
@@ -127,6 +185,10 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rax\n");
             fprintf(f, "    push rax\n");
             fprintf(f, "    push rax\n");
+            break;
+        case OP_IF:
+            fprintf(f, "    ; <OP_IF>\n");
+            assert(" <OP_IF> is not yet implemented!");
             break;
         default:
             fprintf(stderr, "error: unknown Operator with value %d reached\n",

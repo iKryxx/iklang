@@ -47,7 +47,7 @@ token_t lexer_next(lexer_t *l) {
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
     const char *text = cur_tt.token;
 
-    _Static_assert(TOK_COUNT == 9,
+    _Static_assert(TOK_COUNT == 17,
                    "Exhaustive handling of token types inside lexer_next()");
 
     if (*text == '+') {
@@ -67,6 +67,27 @@ token_t lexer_next(lexer_t *l) {
     }
     if (*text == '/') {
         tok.type = TOK_SLASH;
+        l->pos++;
+        return tok;
+    }
+
+    if (*text == '=') {
+        tok.type = TOK_EQUALS;
+        l->pos++;
+        return tok;
+    }
+    if (*text == '>') {
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_GREATER_EQUALS : TOK_GREATER;
+        l->pos++;
+        return tok;
+    }
+    if (*text == '<') {
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_LESS_EQUALS : TOK_LESS;
+        l->pos++;
+        return tok;
+    }
+    if (*text == '!') {
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_NOT_EQUALS : TOK_EXCLAM;
         l->pos++;
         return tok;
     }
@@ -94,6 +115,12 @@ token_t lexer_next(lexer_t *l) {
             return tok;
         }
 
+        if (cur_tt.token_len == 2 && __builtin_memcmp(text, "if", 3) == 0) {
+            tok.type = TOK_IF;
+            l->pos++;
+            return tok;
+        }
+
         fprintf(stderr, "%s:%llu:%llu: error: unknown symbol: %.*s\n",
                 cur_tt.file_name, cur_tt.row, cur_tt.column, cur_tt.token_len,
                 cur_tt.token);
@@ -103,4 +130,15 @@ token_t lexer_next(lexer_t *l) {
     tok.type = TOK_UNKNOWN;
     l->pos++;
     return tok;
+}
+
+token_t lexer_peek_next(lexer_t *l, bool *success) {
+    if (l->pos == l->src.length) {
+        *success = false;
+        return (token_t){0};
+    }
+
+    token_t next = lexer_next(l);
+    l->pos--;
+    return next;
 }

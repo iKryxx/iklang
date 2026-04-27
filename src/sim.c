@@ -31,7 +31,7 @@ long long pop(void) {
 }
 
 void sim_run(da_t *prog) {
-    _Static_assert(OP_COUNT == 7,
+    _Static_assert(OP_COUNT == 15,
                    "Exhaustive operator handling inside sim_run");
 
     stack = da_new(long long);
@@ -74,6 +74,57 @@ void sim_run(da_t *prog) {
             break;
         }
 
+        case OP_EQUALS: {
+            long long b = pop();
+            long long a = pop();
+            push(a == b ? 1 : 0);
+            break;
+        }
+
+        case OP_GREATER: {
+            long long b = pop();
+            long long a = pop();
+            push(a > b ? 1 : 0);
+            break;
+        }
+
+        case OP_GREATER_EQUALS: {
+            long long b = pop();
+            long long a = pop();
+            push(a >= b ? 1 : 0);
+            break;
+        }
+
+        case OP_LESS: {
+            long long b = pop();
+            long long a = pop();
+            push(a < b ? 1 : 0);
+            break;
+        }
+
+        case OP_LESS_EQUALS: {
+            long long b = pop();
+            long long a = pop();
+            push(a <= b ? 1 : 0);
+            break;
+        }
+
+            // FIXME '!' should not occur alone (at least now). We still handle
+            // it by comparing 1 value of the stack with 0
+        case OP_NOT: {
+            long long a = pop();
+            long long b = 0;
+            push(a == b ? 1 : 0);
+            break;
+        }
+
+        case OP_NOT_EQUALS: {
+            long long b = pop();
+            long long a = pop();
+            push(a != b ? 1 : 0);
+            break;
+        }
+
         case OP_DUMP: {
             long long val = pop();
             printf("%lld\n", val);
@@ -84,6 +135,11 @@ void sim_run(da_t *prog) {
             long long val = pop();
             push(val);
             push(val);
+            break;
+        }
+
+        case OP_IF: {
+            assert("<OP_IF> is not yet implemented");
             break;
         }
         default:

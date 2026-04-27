@@ -11,9 +11,19 @@ typedef enum {
     TOK_STAR,  // '*'
     TOK_SLASH, // '/'
 
+    /* boolean operators */
+    TOK_EQUALS,         // '='
+    TOK_GREATER,        // '>'
+    TOK_GREATER_EQUALS, // ">="
+    TOK_LESS,           // '<'
+    TOK_LESS_EQUALS,    // "<="
+    TOK_EXCLAM,         // '!'
+    TOK_NOT_EQUALS,     // "!="
+
     /* builtins */
     TOK_DUMP, // "dump"
     TOK_DUP,  // "dup"
+    TOK_IF,   // "if"
 
     /* control */
     TOK_EOF,     // '-1'

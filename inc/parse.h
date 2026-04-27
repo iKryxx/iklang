@@ -9,8 +9,16 @@ typedef enum {
     OP_MINUS,
     OP_STAR,
     OP_SLASH,
+    OP_EQUALS,
+    OP_GREATER,
+    OP_GREATER_EQUALS,
+    OP_LESS,
+    OP_LESS_EQUALS,
+    OP_NOT,
+    OP_NOT_EQUALS,
     OP_DUMP,
     OP_DUP,
+    OP_IF,
     OP_COUNT
 } op_type_t;
 
