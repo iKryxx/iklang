@@ -24,6 +24,7 @@ typedef enum {
     TOK_DUMP, // "dump"
     TOK_DUP,  // "dup"
     TOK_IF,   // "if"
+    TOK_END,  // "end"
 
     /* control */
     TOK_EOF,     // '-1'

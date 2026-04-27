@@ -1,0 +1,31 @@
+1 if
+    10 dump
+end
+
+0 if
+    20 dump
+end
+
+5 3 > if
+    30 dump
+end
+
+3 5 > if
+    40 dump
+end
+
+4 4 = if
+    50 dump
+end
+
+1 if
+    1 if
+        60 dump
+    end
+end
+
+0 if
+    1 if
+        70 dump
+    end
+end

@@ -19,6 +19,7 @@ typedef enum {
     OP_DUMP,
     OP_DUP,
     OP_IF,
+    OP_END,
     OP_COUNT
 } op_type_t;
 

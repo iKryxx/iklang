@@ -31,7 +31,7 @@ long long pop(void) {
 }
 
 void sim_run(da_t *prog) {
-    _Static_assert(OP_COUNT == 15,
+    _Static_assert(OP_COUNT == 16,
                    "Exhaustive operator handling inside sim_run");
 
     stack = da_new(long long);
@@ -139,7 +139,13 @@ void sim_run(da_t *prog) {
         }
 
         case OP_IF: {
-            assert("<OP_IF> is not yet implemented");
+            int expr = pop();
+            if (!expr)
+                i = op->ival; // "Jump" to end block
+            break;
+        }
+
+        case OP_END: {
             break;
         }
         default:

@@ -47,7 +47,7 @@ token_t lexer_next(lexer_t *l) {
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
     const char *text = cur_tt.token;
 
-    _Static_assert(TOK_COUNT == 17,
+    _Static_assert(TOK_COUNT == 18,
                    "Exhaustive handling of token types inside lexer_next()");
 
     if (*text == '+') {
@@ -77,17 +77,21 @@ token_t lexer_next(lexer_t *l) {
         return tok;
     }
     if (*text == '>') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_GREATER_EQUALS : TOK_GREATER;
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=')
+                       ? TOK_GREATER_EQUALS
+                       : TOK_GREATER;
         l->pos++;
         return tok;
     }
     if (*text == '<') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_LESS_EQUALS : TOK_LESS;
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_LESS_EQUALS
+                                                             : TOK_LESS;
         l->pos++;
         return tok;
     }
     if (*text == '!') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_NOT_EQUALS : TOK_EXCLAM;
+        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_NOT_EQUALS
+                                                             : TOK_EXCLAM;
         l->pos++;
         return tok;
     }
@@ -115,8 +119,14 @@ token_t lexer_next(lexer_t *l) {
             return tok;
         }
 
-        if (cur_tt.token_len == 2 && __builtin_memcmp(text, "if", 3) == 0) {
+        if (cur_tt.token_len == 2 && __builtin_memcmp(text, "if", 2) == 0) {
             tok.type = TOK_IF;
+            l->pos++;
+            return tok;
+        }
+
+        if (cur_tt.token_len == 3 && __builtin_memcmp(text, "end", 3) == 0) {
+            tok.type = TOK_END;
             l->pos++;
             return tok;
         }
