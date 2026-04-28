@@ -29,3 +29,13 @@ end
         70 dump
     end
 end
+
+1 if
+    0 if
+        80 dump
+    else
+        90 dump
+    end
+else
+    100 dump
+end

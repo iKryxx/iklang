@@ -31,7 +31,10 @@ long long pop(void) {
 }
 
 void sim_run(da_t *prog) {
-    _Static_assert(OP_COUNT == 16,
+    // TODO: remove simulating
+    fprintf(stderr, "Simulating has gone deprecated. Please compile instead.\n");
+    exit(1);
+    _Static_assert(OP_COUNT == 17,
                    "Exhaustive operator handling inside sim_run");
 
     stack = da_new(long long);
@@ -142,6 +145,10 @@ void sim_run(da_t *prog) {
             int expr = pop();
             if (!expr)
                 i = op->ival; // "Jump" to end block
+            break;
+        }
+
+        case OP_ELSE: {
             break;
         }
 

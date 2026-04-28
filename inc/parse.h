@@ -20,6 +20,7 @@ typedef enum {
     OP_DUP,
     OP_IF,
     OP_END,
+    OP_ELSE,
     OP_COUNT
 } op_type_t;
 
@@ -29,5 +30,7 @@ typedef struct {
 } op_t;
 
 void parse(da_t *prog, const char *src);
+
+const char *op_type_name(op_type_t o);
 
 #endif

@@ -47,7 +47,7 @@ token_t lexer_next(lexer_t *l) {
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
     const char *text = cur_tt.token;
 
-    _Static_assert(TOK_COUNT == 18,
+    _Static_assert(TOK_COUNT == 19,
                    "Exhaustive handling of token types inside lexer_next()");
 
     if (*text == '+') {
@@ -127,6 +127,12 @@ token_t lexer_next(lexer_t *l) {
 
         if (cur_tt.token_len == 3 && __builtin_memcmp(text, "end", 3) == 0) {
             tok.type = TOK_END;
+            l->pos++;
+            return tok;
+        }
+
+        if (cur_tt.token_len == 4 && __builtin_memcmp(text, "else", 4) == 0) {
+            tok.type = TOK_ELSE;
             l->pos++;
             return tok;
         }

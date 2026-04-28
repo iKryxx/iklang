@@ -81,7 +81,7 @@ void append_builtins(FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 16,
+    _Static_assert(OP_COUNT == 17,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -191,11 +191,16 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rax\n");
             fprintf(f, "    xor rbx, rbx\n");
             fprintf(f, "    cmp rax, rbx\n");
-            fprintf(f, "    je .end_%lld\n", op->ival);
+            fprintf(f, "    je .ik_caddr_%lld\n", op->ival);
+            break;
+        case OP_ELSE:
+            fprintf(f, "    ; <OP_ELSE>\n");
+            fprintf(f, "    jmp .ik_caddr_%lld\n", op->ival);
+            fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
         case OP_END:
             fprintf(f, "    ; <OP_END>\n");
-            fprintf(f, ".end_%zu:\n", i);
+            fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
         default:
             fprintf(stderr, "error: unknown Operator with value %d reached\n",
