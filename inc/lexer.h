@@ -25,8 +25,11 @@ typedef struct {
 } token_t;
 
 void lexer_init(lexer_t *l, const char *src);
+
 void lexer_free(lexer_t *l);
+
 token_t lexer_next(lexer_t *l);
+
 token_t lexer_peek_next(lexer_t *l, bool *success);
 
 #endif

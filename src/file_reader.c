@@ -65,12 +65,3 @@ void tokenize_file(const char *text, const char *filename, da_t *out) {
         }
     }
 }
-
-void print_tokenized_file(const da_t *tokens) {
-    for (size_t i = 0; i < tokens->length; i++) {
-        text_token_t tok = *(text_token_t *)da_get(tokens, i);
-
-        printf("%s:%llu:%llu: %.*s\n", tok.file_name, tok.row, tok.column,
-               tok.token_len, tok.token);
-    }
-}

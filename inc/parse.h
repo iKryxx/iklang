@@ -42,4 +42,5 @@ void parse(da_t *prog, const char *src);
 const char *op_type_name(op_type_t o);
 
 op_type_t op_name_type(const char *name);
+
 #endif
