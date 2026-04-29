@@ -4,6 +4,8 @@
 #include <string.h>
 
 static void da_grow(da_t *arr) {
+    if (arr->is_static) return;
+
     size_t old_cap = arr->cap;
 
     size_t new_cap = old_cap == 0 ? 10 : old_cap * 2;
@@ -21,17 +23,25 @@ void da_init(da_t *arr, size_t init_cap, size_t stride) {
     arr->length = 0;
     arr->cap = init_cap;
     arr->stride = stride;
+    arr->is_static = false;
+    arr->compare_cb = NULL;
 }
 
-void da_push(da_t *arr, void *data) {
+void *da_push(da_t *arr, void *data) {
+    if (arr->is_static) return NULL;
+
     if (arr->length == arr->cap)
         da_grow(arr);
 
-    memcpy((unsigned char *)arr->data + arr->stride * arr->length++, data,
-           arr->stride);
+    unsigned char *dst = (unsigned char *)arr->data + arr->stride * arr->length++;
+
+    memcpy(dst, data, arr->stride);
+    return dst;
 }
 
 void *da_pop(da_t *arr) {
+    if (arr->is_static) return NULL;
+
     if (arr->length == 0)
         return NULL;
     return (unsigned char *)arr->data + arr->stride * --arr->length;
@@ -44,9 +54,20 @@ void *da_get(const da_t *arr, size_t i) {
 }
 
 void da_free(da_t *arr) {
+    if (arr->is_static) return;
     free(arr->data);
     arr->data = NULL;
     arr->stride = 0;
     arr->length = 0;
     arr->cap = 0;
+}
+
+bool da_has(const da_t *arr, void *data) {
+    if (arr->compare_cb == NULL) return false;
+
+    for (size_t i = 0; i < arr->length; i++) {
+        if (arr->compare_cb(arr, i, data) == 0) return true;
+    }
+
+    return false;
 }

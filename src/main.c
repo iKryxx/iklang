@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
     parse(&prog, file);
 
-    if (false)
+    if (true)
         print_tokens(&prog);
 
     if (simulate)

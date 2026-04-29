@@ -203,8 +203,8 @@ int compile(da_t *prog) {
             fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
         default:
-            fprintf(stderr, "error: unknown Operator with value %d reached\n",
-                    op->type);
+            fprintf(stderr, "%s:%zu:%zu: error: unknown Operator `%d` reached.\n",
+                    op->location.file, op->location.row, op->location.col, op->type);
             fclose(f);
             remove("out.tmp");
             return 1;

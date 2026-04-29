@@ -26,11 +26,20 @@ typedef enum {
 
 typedef struct {
     op_type_t type;
-    long long ival;
+    union {
+        long long ival;
+        size_t jmp_addr;
+    };
+    struct {
+        const char *file;
+        size_t row;
+        size_t col;
+    } location;
 } op_t;
 
 void parse(da_t *prog, const char *src);
 
 const char *op_type_name(op_type_t o);
 
+op_type_t op_name_type(const char *name);
 #endif

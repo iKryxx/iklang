@@ -11,8 +11,17 @@ typedef struct {
 } lexer_t;
 
 typedef struct {
-    token_type_t type;
-    long long ival;
+    token_kind_t type;
+    char name[10];
+    union {
+        long long ival;
+        size_t jmp_addr;
+    };
+    struct {
+        const char *file;
+        size_t row;
+        size_t col;
+    } location;
 } token_t;
 
 void lexer_init(lexer_t *l, const char *src);

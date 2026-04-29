@@ -22,6 +22,16 @@ long long str_to_int(const char *str, size_t len) {
     return retval;
 }
 
+bool is_number(const text_token_t *tt) {
+    const char *str = tt->token;
+
+    if (!isdigit(*str)) return false;
+    for (int i = 1; i < tt->token_len; i++) {
+        if (!isdigit(str[i])) return false;
+    }
+    return true;
+}
+
 void lexer_init(lexer_t *l, const char *src) {
     l->buf = NULL;
     read_entire_file(src, &l->buf);
@@ -40,110 +50,26 @@ token_t lexer_next(lexer_t *l) {
 
     // end
     if (l->pos == l->src.length) {
-        tok.type = TOK_EOF;
+        tok.type = TOKEN_EOF;
         return tok;
     }
 
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
-    const char *text = cur_tt.token;
 
-    _Static_assert(TOK_COUNT == 19,
-                   "Exhaustive handling of token types inside lexer_next()");
+    _Static_assert(TOKEN_COUNT == 3, "Exhaustive handling of token types inside lexer_next");
 
-    if (*text == '+') {
-        tok.type = TOK_PLUS;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '-') {
-        tok.type = TOK_MINUS;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '*') {
-        tok.type = TOK_STAR;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '/') {
-        tok.type = TOK_SLASH;
-        l->pos++;
-        return tok;
+    if (is_number(&cur_tt)) {
+        tok.type = TOKEN_NUMBER;
+        tok.ival = str_to_int(cur_tt.token, cur_tt.token_len);
+    } else {
+        tok.type = TOKEN_IDENT;
+        strncpy(tok.name, cur_tt.token, cur_tt.token_len);
     }
 
-    if (*text == '=') {
-        tok.type = TOK_EQUALS;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '>') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=')
-                       ? TOK_GREATER_EQUALS
-                       : TOK_GREATER;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '<') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_LESS_EQUALS
-                                                             : TOK_LESS;
-        l->pos++;
-        return tok;
-    }
-    if (*text == '!') {
-        tok.type = (cur_tt.token_len == 2 && text[1] == '=') ? TOK_NOT_EQUALS
-                                                             : TOK_EXCLAM;
-        l->pos++;
-        return tok;
-    }
+    tok.location.file = cur_tt.file_name;
+    tok.location.row = cur_tt.row;
+    tok.location.col = cur_tt.column;
 
-    // integer literal
-    if (isdigit(*text)) {
-        tok.type = TOK_INT;
-
-        tok.ival = str_to_int(text, cur_tt.token_len);
-        l->pos++;
-
-        return tok;
-    }
-
-    if (isalpha(*text)) {
-        if (cur_tt.token_len == 4 && __builtin_memcmp(text, "dump", 4) == 0) {
-            tok.type = TOK_DUMP;
-            l->pos++;
-            return tok;
-        }
-
-        if (cur_tt.token_len == 3 && __builtin_memcmp(text, "dup", 3) == 0) {
-            tok.type = TOK_DUP;
-            l->pos++;
-            return tok;
-        }
-
-        if (cur_tt.token_len == 2 && __builtin_memcmp(text, "if", 2) == 0) {
-            tok.type = TOK_IF;
-            l->pos++;
-            return tok;
-        }
-
-        if (cur_tt.token_len == 3 && __builtin_memcmp(text, "end", 3) == 0) {
-            tok.type = TOK_END;
-            l->pos++;
-            return tok;
-        }
-
-        if (cur_tt.token_len == 4 && __builtin_memcmp(text, "else", 4) == 0) {
-            tok.type = TOK_ELSE;
-            l->pos++;
-            return tok;
-        }
-
-        fprintf(stderr, "%s:%llu:%llu: error: unknown symbol: %.*s\n",
-                cur_tt.file_name, cur_tt.row, cur_tt.column, cur_tt.token_len,
-                cur_tt.token);
-        exit(1);
-    }
-
-    tok.type = TOK_UNKNOWN;
     l->pos++;
     return tok;
 }
