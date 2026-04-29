@@ -8,8 +8,7 @@
 
 void usage(void) {
     printf("Usage:\n");
-    printf("    ./iklc [-s] <file>\n");
-    printf("    -s  Run in simulation (interpreter) mode instead of compiling\n");
+    printf("    ./iklc <file>\n");
 }
 
 void print_tokens(da_t *prog) {
@@ -26,40 +25,20 @@ void print_tokens(da_t *prog) {
 
 int main(int argc, char **argv) {
     const char *file = NULL;
-    bool simulate = false;
     da_t prog = {0};
 
-    if (argc < 2 || argc > 3) {
+    if (argc != 2) {
         usage();
         return 1;
     }
 
-    int file_arg = 1;
-    if (argc == 3) {
-        if (strcmp(argv[1], "-s") == 0) {
-            simulate = true;
-            file_arg = 2;
-        } else {
-            usage();
-            return 1;
-        }
-    }
-
-    file = argv[file_arg];
+    file = argv[1];
     if (access(file, F_OK) != 0) {
         fprintf(stderr, "error: file `%s` does not exist\n", file);
         return 1;
     }
 
     parse(&prog, file);
-
-    if (true)
-        print_tokens(&prog);
-
-    if (simulate)
-        sim_run(&prog);
-    else
-        compile(&prog);
 
     return 0;
 }
