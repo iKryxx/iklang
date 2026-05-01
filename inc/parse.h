@@ -1,6 +1,8 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#define MAX_IDENTIFIER_LENGTH 16
+
 #include "da.h"
 
 typedef enum {
@@ -21,11 +23,15 @@ typedef enum {
     OP_IF,
     OP_END,
     OP_ELSE,
+    OP_LET,
+    OP_IDENT,
+    OP_PUSH_IDENT,
     OP_COUNT
 } op_type_t;
 
 typedef struct {
     op_type_t type;
+    char name[MAX_IDENTIFIER_LENGTH + 1];
     union {
         long long ival;
         size_t jmp_addr;

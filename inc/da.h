@@ -36,7 +36,7 @@ static inline da_t _da_new(size_t stride) {
         .compare_cb = cmp_cb,                            \
     }
 
-void *da_push(da_t *arr, void *data);
+void *da_push(da_t *arr, const void *data);
 
 void *da_pop(da_t *arr);
 

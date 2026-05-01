@@ -80,8 +80,19 @@ void append_builtins(FILE *f) {
     }
 }
 
+void append_bindings(da_t *prog, FILE *f) {
+    fprintf(f, "; ----- BINDINGS -----\n");
+    fprintf(f, "section .bss\n");
+    for (size_t i = 0; i < prog->length; i++) {
+        op_t *op = (op_t *)da_get(prog, i);
+
+        if (op->type != OP_LET) continue;
+        fprintf(f, "%s resq 1\n", op->name);
+    }
+}
+
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 17,
+    _Static_assert(OP_COUNT == 20,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -93,6 +104,7 @@ int compile(da_t *prog) {
     fprintf(f, "BITS 64\n");
     fprintf(f, "section .data\n");
     fprintf(f, "div_zero_msg: db \"error: division by zero\", 10\n");
+    append_bindings(prog, f);
     fprintf(f, "section .text\n");
     append_builtins(f);
     fprintf(f, "global _start\n");
@@ -191,16 +203,27 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rax\n");
             fprintf(f, "    xor rbx, rbx\n");
             fprintf(f, "    cmp rax, rbx\n");
-            fprintf(f, "    je .ik_caddr_%lld\n", op->ival);
+            fprintf(f, "    je .ik_caddr_%zu\n", op->jmp_addr);
             break;
         case OP_ELSE:
             fprintf(f, "    ; <OP_ELSE>\n");
-            fprintf(f, "    jmp .ik_caddr_%lld\n", op->ival);
+            fprintf(f, "    jmp .ik_caddr_%zu\n", op->jmp_addr);
             fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
         case OP_END:
             fprintf(f, "    ; <OP_END>\n");
             fprintf(f, ".ik_caddr_%zu:\n", i);
+            break;
+        case OP_LET:
+            fprintf(f, "    ; <OP_LET>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    mov qword [%s], rax\n", op->name);
+            break;
+        case OP_IDENT:
+            break;
+        case OP_PUSH_IDENT:
+            fprintf(f, "    ; <OP_PUSH_IDENT>\n");
+            fprintf(f, "    push qword [%s]\n", op->name);
             break;
         default:
             fprintf(stderr, "%s:%zu:%zu: error: unknown Operator `%d` reached.\n",

@@ -27,7 +27,7 @@ void da_init(da_t *arr, size_t init_cap, size_t stride) {
     arr->compare_cb = NULL;
 }
 
-void *da_push(da_t *arr, void *data) {
+void *da_push(da_t *arr, const void *data) {
     if (arr->is_static) return NULL;
 
     if (arr->length == arr->cap)
