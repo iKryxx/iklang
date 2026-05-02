@@ -1,0 +1,12 @@
+5 x let
+3 y let
+
+x y > dump
+x y < dump
+x y = dump
+x y != dump
+x y >= dump
+x y <= dump
+
+5 z let
+x z = dump

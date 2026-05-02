@@ -1,0 +1,28 @@
+1 cond let
+
+cond if
+    10 dump
+end
+
+0 off let
+
+off if
+    20 dump
+else
+    30 dump
+end
+
+5 val let
+3 threshold let
+
+val threshold > if
+    40 dump
+else
+    50 dump
+end
+
+val threshold < if
+    60 dump
+else
+    70 dump
+end

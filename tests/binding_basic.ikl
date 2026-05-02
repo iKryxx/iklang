@@ -1,0 +1,8 @@
+42 x let
+x dump
+
+0 zero let
+zero dump
+
+100 n let
+n dump

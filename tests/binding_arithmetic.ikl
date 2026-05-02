@@ -1,0 +1,7 @@
+30 a let
+10 b let
+
+a b + dump
+a b - dump
+a b * dump
+a b / dump
