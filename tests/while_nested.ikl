@@ -1,0 +1,7 @@
+1 i let
+while i 9 < do
+    i 1 + i set
+    i 2 / 2 * i = if
+        i dump
+    end
+end

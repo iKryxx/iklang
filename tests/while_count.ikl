@@ -1,0 +1,5 @@
+1 i let
+while i 5 <= do
+    i dump
+    i 1 + i set
+end

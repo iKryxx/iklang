@@ -16,7 +16,7 @@ void print_ops(da_t *prog) {
             printf("(%llu)", cur->ival);
             break;
         case OP_IF:
-        case OP_END:
+        case OP_ENDIF:
         case OP_ELSE:
             printf(" (%zu)", cur->jmp_addr);
             break;

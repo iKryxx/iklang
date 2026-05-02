@@ -1,0 +1,7 @@
+1 i let
+0 sum let
+while i 10 <= do
+    i sum + sum set
+    i 1 + i set
+end
+sum dump

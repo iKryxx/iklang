@@ -13,7 +13,7 @@ static inline int _idx_cmp_char_arr(const da_t *arr, size_t i, void *data) {
 }
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 18 &&
+    assert(TOKEN_IDENT_COUNT == 20 &&
            "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
@@ -45,15 +45,31 @@ void parse(da_t *prog, const char *src) {
                     da_push(&cross_reference_stack, &prog->length);
                     break;
                 case OP_ELSE:
-                case OP_END: {
-                    if (cross_reference_stack.length == 0)
-                        err_throw(ERR_UNEXPECTED_KEYWORD,
-                                  ERR_CTX(tok.location, tok.name));
-                    op_t *block_begin = (op_t *)da_get(
-                        prog, *(size_t *)da_pop(&cross_reference_stack) - 1);
-                    block_begin->jmp_addr = prog->length - 1;
-                    if (op->type == OP_ELSE)
-                        da_push(&cross_reference_stack, &prog->length);
+                case OP_ENDIF: {
+                    if (cross_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    op_t *block_begin = (op_t *)da_get(prog, *(size_t *)da_pop(&cross_reference_stack) - 1);
+                    if(block_begin->type == OP_IF || block_begin->type == OP_ELSE) {
+                        block_begin->jmp_addr = prog->length - 1;
+                        if (op->type == OP_ELSE) da_push(&cross_reference_stack, &prog->length);
+                    } else if(block_begin->type == OP_DO && op->type == OP_ENDIF) {
+                        op->jmp_addr = block_begin->jmp_addr;
+                        block_begin->jmp_addr = prog->length - 1;
+                        op->type = OP_ENDWHILE;
+                    } else err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    
+                    break;
+                }
+                case OP_WHILE: {
+                    da_push(&cross_reference_stack, &prog->length);
+                    break;
+                }
+                case OP_DO: {
+                    if(cross_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    size_t block_idx = *(size_t*)da_pop(&cross_reference_stack);
+                    op_t *block_begin = (op_t*)da_get(prog, block_idx - 1);
+                    if(block_begin->type != OP_WHILE) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    op->jmp_addr = block_idx - 1;
+                    da_push(&cross_reference_stack, &prog->length);
                     break;
                 }
                 case OP_LET: {
@@ -119,7 +135,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 21,
+    _Static_assert(OP_COUNT == 24,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -138,8 +154,11 @@ const char *op_type_name(op_type_t o) {
     case OP_DUMP:           return "OP_DUMP";
     case OP_DUP:            return "OP_DUP";
     case OP_IF:             return "OP_IF";
-    case OP_END:            return "OP_END";
+    case OP_ENDIF:          return "OP_END";
     case OP_ELSE:           return "OP_ELSE";
+    case OP_WHILE:          return "OP_WHILE";
+    case OP_DO:             return "OP_DO";
+    case OP_ENDWHILE:       return "OP_ENDWHILE";
     case OP_LET:            return "OP_LET";
     case OP_SET:            return "OP_SET";
     case OP_IDENT:          return "OP_IDENT";
@@ -149,7 +168,7 @@ const char *op_type_name(op_type_t o) {
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 21,
+    _Static_assert(OP_COUNT == 24,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")    == 0) return OP_PLUS;
@@ -166,8 +185,10 @@ op_type_t op_name_type(const char *name) {
     if (strcmp(name, "dump") == 0) return OP_DUMP;
     if (strcmp(name, "dup")  == 0) return OP_DUP;
     if (strcmp(name, "if")   == 0) return OP_IF;
-    if (strcmp(name, "end")  == 0) return OP_END;
+    if (strcmp(name, "end")  == 0) return OP_ENDIF; // COULD ALSO BE OP_ENDWHILE LATER
     if (strcmp(name, "else") == 0) return OP_ELSE;
+    if (strcmp(name, "while")== 0) return OP_WHILE;
+    if (strcmp(name, "do")   == 0) return OP_DO;
     if (strcmp(name, "let")  == 0) return OP_LET;
     if (strcmp(name, "set")  == 0) return OP_SET;
     return OP_IDENT;

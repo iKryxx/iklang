@@ -92,7 +92,7 @@ void append_bindings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 21,
+    _Static_assert(OP_COUNT == 24,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -210,8 +210,24 @@ int compile(da_t *prog) {
             fprintf(f, "    jmp .ik_caddr_%zu\n", op->jmp_addr);
             fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
-        case OP_END:
+        case OP_ENDIF:
             fprintf(f, "    ; <OP_END>\n");
+            fprintf(f, ".ik_caddr_%zu:\n", i);
+            break;
+        case OP_WHILE:
+            fprintf(f, "    ; <OP_WHILE>\n");
+            fprintf(f, ".ik_caddr_%zu:\n", i);
+            break;
+        case OP_DO:
+            fprintf(f, "    ; <OP_DO>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    xor rbx, rbx\n");
+            fprintf(f, "    cmp rax, rbx\n");
+            fprintf(f, "    je .ik_caddr_%zu\n", op->jmp_addr);  // DO goes to end_while and END goes to while
+            break;
+        case OP_ENDWHILE:
+            fprintf(f, "    ; <OP_ENDWHILE>\n");
+            fprintf(f, "    jmp .ik_caddr_%zu\n", op->jmp_addr);
             fprintf(f, ".ik_caddr_%zu:\n", i);
             break;
         case OP_LET:

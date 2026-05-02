@@ -1,0 +1,4 @@
+0 flag let
+while flag do
+    99 dump
+end
