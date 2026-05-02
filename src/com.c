@@ -92,7 +92,7 @@ void append_bindings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 20,
+    _Static_assert(OP_COUNT == 21,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -216,6 +216,11 @@ int compile(da_t *prog) {
             break;
         case OP_LET:
             fprintf(f, "    ; <OP_LET>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    mov qword [%s], rax\n", op->name);
+            break;
+        case OP_SET:
+            fprintf(f, "    ; <OP_SET>\n");
             fprintf(f, "    pop rax\n");
             fprintf(f, "    mov qword [%s], rax\n", op->name);
             break;

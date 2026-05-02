@@ -24,6 +24,7 @@ typedef enum {
     OP_END,
     OP_ELSE,
     OP_LET,
+    OP_SET,
     OP_IDENT,
     OP_PUSH_IDENT,
     OP_COUNT

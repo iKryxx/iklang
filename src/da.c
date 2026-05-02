@@ -53,6 +53,18 @@ void *da_get(const da_t *arr, size_t i) {
     return (unsigned char *)arr->data + arr->stride * i;
 }
 
+void da_remove(da_t *arr, size_t i) {
+    if (i >= arr->length)
+        return;
+    if (i == arr->length - 1) {
+        arr->length--;
+        return;
+    }
+    memmove((unsigned char *)arr->data + arr->stride * i,
+            (unsigned char *)arr->data + arr->stride * (i + 1),
+            (--arr->length - i) * arr->stride);
+}
+
 void da_free(da_t *arr) {
     if (arr->is_static) return;
     free(arr->data);

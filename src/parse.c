@@ -11,7 +11,7 @@ static inline int _idx_cmp_char_arr(const da_t *arr, size_t i, void *data) {
 }
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 17 && "Exhaustive handling of token types inside parse");
+    assert(TOKEN_IDENT_COUNT == 18 && "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
     lexer_init(&lex, src);
@@ -70,6 +70,17 @@ void parse(da_t *prog, const char *src) {
                     da_push(&bindings_list, &ident_op->name);
                     break;
                 }
+                case OP_SET: {
+                    op_t *ident_op = (op_t *)da_get(prog, prog->length - 2);
+                    if (ident_op == NULL || ident_op->type != OP_PUSH_IDENT) {
+                        fprintf(stderr, "%s:%zu:%zu: error: unexpected `%s` keyword.\n", tok.location.file, tok.location.row, tok.location.col, tok.name);
+                        lexer_free(&lex);
+                        exit(1);
+                    }
+                    ident_op->type = OP_SET;
+                    da_pop(prog);
+                    continue;
+                }
                 default: break;
                 }
             } else {
@@ -117,52 +128,54 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 20, "Exhaustive handling of operator types inside op_type_name");
+    _Static_assert(OP_COUNT == 21, "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
-    case OP_PUSH_INT:        return "OP_PUSH_INT";
-    case OP_PLUS:            return "OP_PLUS";
-    case OP_MINUS:           return "OP_MINUS";
-    case OP_STAR:            return "OP_STAR";
-    case OP_SLASH:           return "OP_SLASH";
-    case OP_EQUALS:          return "OP_EQUALS";
-    case OP_GREATER:         return "OP_GREATER";
-    case OP_GREATER_EQUALS:  return "OP_GREATER_EQUALS";
-    case OP_LESS:            return "OP_LESS";
-    case OP_LESS_EQUALS:     return "OP_LESS_EQUALS";
-    case OP_NOT:             return "OP_NOT";
-    case OP_NOT_EQUALS:      return "OP_NOT_EQUALS";
-    case OP_DUMP:            return "OP_DUMP";
-    case OP_DUP:             return "OP_DUP";
-    case OP_IF:              return "OP_IF";
-    case OP_END:             return "OP_END";
-    case OP_ELSE:            return "OP_ELSE";
-    case OP_LET:             return "OP_LET";
-    case OP_IDENT:           return "OP_IDENT";
-    case OP_PUSH_IDENT:      return "OP_PUSH_IDENT";
-    default:                 return "OP_UNKNOWN";
+    case OP_PUSH_INT: return "OP_PUSH_INT";
+    case OP_PLUS: return "OP_PLUS";
+    case OP_MINUS: return "OP_MINUS";
+    case OP_STAR: return "OP_STAR";
+    case OP_SLASH: return "OP_SLASH";
+    case OP_EQUALS: return "OP_EQUALS";
+    case OP_GREATER: return "OP_GREATER";
+    case OP_GREATER_EQUALS: return "OP_GREATER_EQUALS";
+    case OP_LESS: return "OP_LESS";
+    case OP_LESS_EQUALS: return "OP_LESS_EQUALS";
+    case OP_NOT: return "OP_NOT";
+    case OP_NOT_EQUALS: return "OP_NOT_EQUALS";
+    case OP_DUMP: return "OP_DUMP";
+    case OP_DUP: return "OP_DUP";
+    case OP_IF: return "OP_IF";
+    case OP_END: return "OP_END";
+    case OP_ELSE: return "OP_ELSE";
+    case OP_LET: return "OP_LET";
+    case OP_SET: return "OP_SET";
+    case OP_IDENT: return "OP_IDENT";
+    case OP_PUSH_IDENT: return "OP_PUSH_IDENT";
+    default: return "OP_UNKNOWN";
     }
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 20, "Exhaustive handling of operator types inside op_name_type");
+    _Static_assert(OP_COUNT == 21, "Exhaustive handling of operator types inside op_name_type");
 
-    if (strcmp(name, "+") == 0)   return OP_PLUS;
-    if (strcmp(name, "-") == 0)   return OP_MINUS;
-    if (strcmp(name, "*") == 0)   return OP_STAR;
-    if (strcmp(name, "/") == 0)   return OP_SLASH;
-    if (strcmp(name, "=") == 0)   return OP_EQUALS;
-    if (strcmp(name, ">") == 0)   return OP_GREATER;
-    if (strcmp(name, ">=") == 0)  return OP_GREATER_EQUALS;
-    if (strcmp(name, "<") == 0)   return OP_LESS;
-    if (strcmp(name, "<=") == 0)  return OP_LESS_EQUALS;
-    if (strcmp(name, "!") == 0)   return OP_NOT;
-    if (strcmp(name, "!=") == 0)  return OP_NOT_EQUALS;
+    if (strcmp(name, "+") == 0) return OP_PLUS;
+    if (strcmp(name, "-") == 0) return OP_MINUS;
+    if (strcmp(name, "*") == 0) return OP_STAR;
+    if (strcmp(name, "/") == 0) return OP_SLASH;
+    if (strcmp(name, "=") == 0) return OP_EQUALS;
+    if (strcmp(name, ">") == 0) return OP_GREATER;
+    if (strcmp(name, ">=") == 0) return OP_GREATER_EQUALS;
+    if (strcmp(name, "<") == 0) return OP_LESS;
+    if (strcmp(name, "<=") == 0) return OP_LESS_EQUALS;
+    if (strcmp(name, "!") == 0) return OP_NOT;
+    if (strcmp(name, "!=") == 0) return OP_NOT_EQUALS;
     if (strcmp(name, "dump") == 0) return OP_DUMP;
-    if (strcmp(name, "dup") == 0)  return OP_DUP;
-    if (strcmp(name, "if") == 0)   return OP_IF;
-    if (strcmp(name, "end") == 0)  return OP_END;
+    if (strcmp(name, "dup") == 0) return OP_DUP;
+    if (strcmp(name, "if") == 0) return OP_IF;
+    if (strcmp(name, "end") == 0) return OP_END;
     if (strcmp(name, "else") == 0) return OP_ELSE;
-    if (strcmp(name, "let") == 0)  return OP_LET;
+    if (strcmp(name, "let") == 0) return OP_LET;
+    if (strcmp(name, "set") == 0) return OP_SET;
     return OP_IDENT;
 }
