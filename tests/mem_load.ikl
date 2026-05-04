@@ -1,0 +1,43 @@
+4 1 mem arr1 let
+10  0 arr1 load set
+20  1 arr1 load set
+30  2 arr1 load set
+255 3 arr1 load set
+0 arr1 load dump
+1 arr1 load dump
+2 arr1 load dump
+3 arr1 load dump
+
+42 0 arr1 load set
+0 arr1 load dump
+1 arr1 load dump
+
+4 2 mem arr2 let
+1000  0 arr2 load set
+65535 1 arr2 load set
+500   2 arr2 load set
+0     3 arr2 load set
+0 arr2 load dump
+1 arr2 load dump
+2 arr2 load dump
+3 arr2 load dump
+
+4 4 mem arr4 let
+100000  0 arr4 load set
+9999999 1 arr4 load set
+500000  2 arr4 load set
+0       3 arr4 load set
+0 arr4 load dump
+1 arr4 load dump
+2 arr4 load dump
+3 arr4 load dump
+
+4 8 mem arr8 let
+1000000000 0 arr8 load set
+2000000000 1 arr8 load set
+0          2 arr8 load set
+1500000000 3 arr8 load set
+0 arr8 load dump
+1 arr8 load dump
+2 arr8 load dump
+3 arr8 load dump
