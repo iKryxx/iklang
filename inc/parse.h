@@ -27,9 +27,12 @@ typedef enum {
     OP_WHILE,
     OP_ENDWHILE,
     OP_LET,
-    OP_SET,
+    OP_SET_VALUE,
+    OP_SET_ARR_IDX,
     OP_IDENT,
     OP_PUSH_IDENT,
+    OP_MEM,
+    OP_LOAD,
     OP_COUNT
 } op_type_t;
 

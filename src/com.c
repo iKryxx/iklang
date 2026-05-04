@@ -24,6 +24,18 @@ static const char *comp_op_to_mov_instr(op_type_t op) {
 }
 
 void append_builtins(FILE *f) {
+    // out_of_bounds_err: print error and exit(1) when array out of bounds access is detected
+    {
+        fprintf(f, "out_of_bounds_err:\n");
+        fprintf(f, "    mov rax, 1\n");
+        fprintf(f, "    mov rdi, 2\n");
+        fprintf(f, "    lea rsi, [rel out_of_bounds_msg]\n");
+        fprintf(f, "    mov rdx, 34\n");
+        fprintf(f, "    syscall\n");
+        fprintf(f, "    mov rax, 60\n");
+        fprintf(f, "    mov rdi, 1\n");
+        fprintf(f, "    syscall\n");
+    }
     // div_zero_err: print error and exit(1) when division by zero is detected
     {
         fprintf(f, "div_zero_err:\n");
@@ -77,6 +89,123 @@ void append_builtins(FILE *f) {
         fprintf(f, "    syscall\n");
         fprintf(f, "    add rsp, 40\n");
         fprintf(f, "    ret\n");
+    }     
+          
+    // mem: allocate memory and put address in rax
+    {   
+        fprintf(f, "mem:\n");
+        fprintf(f, "    push rdx\n");
+        fprintf(f, "    push rcx\n");
+        fprintf(f, "    mov rax, 12\n");
+        fprintf(f, "    xor rdi, rdi\n");
+        fprintf(f, "    syscall\n");
+        // rbx = base of allocation (ptr)
+        // rcx = stride
+        // rdx = size
+        fprintf(f, "    mov rbx, rax\n");
+        fprintf(f, "    pop rcx\n");
+        fprintf(f, "    pop rdx\n");
+        // prepare next SYS_BRK call by calculating malloc size
+        // end of allocation = base_ptr + sizeof(header) + stride * size
+        fprintf(f, "    mov rdi, rcx\n");
+        fprintf(f, "    imul rdi, rdx\n");
+        fprintf(f, "    add rdi, 16\n");
+        fprintf(f, "    add rdi, rbx\n");
+        fprintf(f, "    mov rax, 12\n");
+        fprintf(f, "    push rcx\n");
+        fprintf(f, "    syscall\n");
+        // set header to { stride, size} and advance it afterwards, push result to stack
+        fprintf(f, "    pop rcx\n");
+        fprintf(f, "    mov [rbx], rcx\n");
+        fprintf(f, "    mov [rbx + 8], rdx\n");
+        fprintf(f, "    lea rax, [rbx + 16]\n");
+        fprintf(f, "    ret\n");
+    }
+
+    // set_arr_idx: sets a value of an array previously allocated by mem
+    {
+        fprintf(f, "set_arr_idx:\n");
+        // rbx = base of allocation (ptr)
+        // rcx = stride 
+        // rdx = size
+        // rsi = index
+        // r8  = value
+        fprintf(f, "    mov rcx, [rbx - 16]\n");
+        fprintf(f, "    mov rdx, [rbx - 8]\n");
+        fprintf(f, "    cmp rsi, rdx\n");  // compare 
+        fprintf(f, "    jae out_of_bounds_err\n"); // throw error if out of bounds access
+        fprintf(f, "    mov rax, rsi\n");
+        fprintf(f, "    imul rax, rcx\n");
+        fprintf(f, "    add rax, rbx\n");
+        fprintf(f, "    lea r9, [rel set_arr_idx_stride_table]\n");
+        fprintf(f, "    jmp [r9 + rcx * 8]\n");
+        fprintf(f, "set_arr_idx_stride_table:\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq set_arr_idx_handle_1\n");
+        fprintf(f, "    dq set_arr_idx_handle_2\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq set_arr_idx_handle_4\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq set_arr_idx_handle_8\n");
+        fprintf(f, "set_arr_idx_handle_1:\n");
+        fprintf(f, "    mov [rax], r8b\n");
+        fprintf(f, "    jmp set_arr_idx_handle_done\n");
+        fprintf(f, "set_arr_idx_handle_2:\n");
+        fprintf(f, "    mov [rax], r8w\n");
+        fprintf(f, "    jmp set_arr_idx_handle_done\n");
+        fprintf(f, "set_arr_idx_handle_4:\n");
+        fprintf(f, "    mov [rax], r8d\n");
+        fprintf(f, "    jmp set_arr_idx_handle_done\n");
+        fprintf(f, "set_arr_idx_handle_8:\n");
+        fprintf(f, "    mov [rax], r8\n");
+        fprintf(f, "    jmp set_arr_idx_handle_done\n");
+        fprintf(f, "set_arr_idx_handle_done:\n");
+        fprintf(f, "    ret\n");
+    }
+
+    // load: pushes a value at index of an array to the stack
+    {
+
+        // rbx = base of allocation (ptr)
+        // rcx = stride
+        // rdx = size
+        // rsi = index
+        fprintf(f, "load:\n");
+        fprintf(f, "    mov rcx, [rbx - 16]\n");
+        fprintf(f, "    mov rdx, [rbx - 8]\n");
+        fprintf(f, "    cmp rsi, rdx\n");  // compare 
+        fprintf(f, "    jae out_of_bounds_err\n"); // throw error if out of bounds access
+        fprintf(f, "    mov rax, rsi\n");
+        fprintf(f, "    imul rax, rcx\n");
+        fprintf(f, "    add rax, rbx\n");
+        fprintf(f, "    lea r9, [rel load_stride_table]\n");
+        fprintf(f, "    jmp [r9 + rcx * 8]\n");
+        fprintf(f, "load_stride_table:\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq load_handle_1\n");
+        fprintf(f, "    dq load_handle_2\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq load_handle_4\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq 0\n");
+        fprintf(f, "    dq load_handle_8\n");
+        fprintf(f, "load_handle_1:\n");
+        fprintf(f, "    movzx rcx, byte [rax]\n");
+        fprintf(f, "    jmp load_handle_done\n");
+        fprintf(f, "load_handle_2:\n");
+        fprintf(f, "    movzx rcx, word [rax]\n");
+        fprintf(f, "    jmp load_handle_done\n");
+        fprintf(f, "load_handle_4:\n");
+        fprintf(f, "    mov eax, dword [rax]\n");
+        fprintf(f, "    jmp load_handle_done\n");
+        fprintf(f, "load_handle_8:\n");
+        fprintf(f, "    mov rcx, [rax]\n");
+        fprintf(f, "    jmp load_handle_done\n");
+        fprintf(f, "load_handle_done:\n");
+        fprintf(f, "    ret\n");
     }
 }
 
@@ -92,7 +221,7 @@ void append_bindings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 24,
+    _Static_assert(OP_COUNT == 27,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -104,6 +233,7 @@ int compile(da_t *prog) {
     fprintf(f, "BITS 64\n");
     fprintf(f, "section .data\n");
     fprintf(f, "div_zero_msg: db \"error: division by zero\", 10\n");
+    fprintf(f, "out_of_bounds_msg: db \"error: array out of bounds access\", 10\n");
     append_bindings(prog, f);
     fprintf(f, "section .text\n");
     append_builtins(f);
@@ -223,7 +353,7 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rax\n");
             fprintf(f, "    xor rbx, rbx\n");
             fprintf(f, "    cmp rax, rbx\n");
-            fprintf(f, "    je .ik_caddr_%zu\n", op->jmp_addr);  // DO goes to end_while and END goes to while
+            fprintf(f, "    je .ik_caddr_%zu\n", op->jmp_addr); 
             break;
         case OP_ENDWHILE:
             fprintf(f, "    ; <OP_ENDWHILE>\n");
@@ -235,16 +365,37 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rax\n");
             fprintf(f, "    mov qword [%s], rax\n", op->name);
             break;
-        case OP_SET:
+        case OP_SET_VALUE:
             fprintf(f, "    ; <OP_SET>\n");
             fprintf(f, "    pop rax\n");
             fprintf(f, "    mov qword [%s], rax\n", op->name);
+            break;
+        case OP_SET_ARR_IDX:
+            fprintf(f, "    ; <OP_SET_ARR_IDX>\n");
+            fprintf(f, "    mov rbx, [%s]\n", op->name); // load ptr to memory buffer
+            fprintf(f, "    pop rsi\n");
+            fprintf(f, "    pop r8\n");
+            fprintf(f, "    call set_arr_idx\n");
+            break;
+        case OP_LOAD:
+            fprintf(f, "    ; <OP_LOAD>\n");
+            fprintf(f, "    mov rbx, [%s]\n", op->name); // load ptr to memory buffer
+            fprintf(f, "    pop rsi\n");
+            fprintf(f, "    call load\n");
+            fprintf(f, "    push rcx\n");
             break;
         case OP_IDENT:
             break;
         case OP_PUSH_IDENT:
             fprintf(f, "    ; <OP_PUSH_IDENT>\n");
             fprintf(f, "    push qword [%s]\n", op->name);
+            break;
+        case OP_MEM:
+            fprintf(f, "    ; <OP_MEM>\n");
+            fprintf(f, "    pop rcx\n");
+            fprintf(f, "    pop rdx\n");
+            fprintf(f, "    call mem\n");
+            fprintf(f, "    push rax\n");
             break;
         default:
             fprintf(stderr, "%s:%zu:%zu: error: unknown Operator `%d` reached.\n",
@@ -263,7 +414,7 @@ int compile(da_t *prog) {
     fclose(f);
     rename("out.tmp", "out.asm");
 
-    if (system("nasm -felf64 out.asm -o out.o") != 0) {
+    if (system("nasm -felf64 -g -F dwarf out.asm -o out.o") != 0) {
         fprintf(stderr, "error: nasm failed\n");
         return 1;
     }

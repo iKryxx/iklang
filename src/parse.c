@@ -13,7 +13,7 @@ static inline int _idx_cmp_char_arr(const da_t *arr, size_t i, void *data) {
 }
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 20 &&
+    assert(TOKEN_IDENT_COUNT == 22 &&
            "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
@@ -83,11 +83,27 @@ void parse(da_t *prog, const char *src) {
                     da_push(&bindings_list, &ident_op->name);
                     break;
                 }
-                case OP_SET: {
-                    op_t *ident_op = (op_t *)da_get(prog, prog->length - 2);
-                    if (ident_op == NULL || ident_op->type != OP_PUSH_IDENT)
+                case OP_SET_VALUE: {
+                    op_t *destination_op = (op_t *)da_get(prog, prog->length - 2);
+                    if(destination_op == NULL)
                         err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
-                    ident_op->type = OP_SET;
+                    if(destination_op->type == OP_PUSH_IDENT) {
+                        destination_op->type = OP_SET_VALUE;
+                        da_pop(prog);
+                        continue;
+                    } else if(destination_op->type == OP_LOAD) {
+                        destination_op->type = OP_SET_ARR_IDX;
+                        da_pop(prog);
+                        continue;
+                    } else {
+                        err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    }
+                }
+                case OP_LOAD: {
+                    op_t *destination_op = (op_t*)da_get(prog, prog->length - 2);
+                    if(destination_op == NULL || destination_op->type != OP_PUSH_IDENT) 
+                        err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+                    destination_op->type = OP_LOAD;
                     da_pop(prog);
                     continue;
                 }
@@ -135,7 +151,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 24,
+    _Static_assert(OP_COUNT == 27,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -160,15 +176,18 @@ const char *op_type_name(op_type_t o) {
     case OP_DO:             return "OP_DO";
     case OP_ENDWHILE:       return "OP_ENDWHILE";
     case OP_LET:            return "OP_LET";
-    case OP_SET:            return "OP_SET";
+    case OP_SET_VALUE:      return "OP_SET_VALUE";
+    case OP_SET_ARR_IDX:    return "OP_SET_ARR_IDX";
     case OP_IDENT:          return "OP_IDENT";
     case OP_PUSH_IDENT:     return "OP_PUSH_IDENT";
+    case OP_MEM:            return "OP_MEM";
+    case OP_LOAD:           return "OP_LOAD";
     default:                return "OP_UNKNOWN";
     }
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 24,
+    _Static_assert(OP_COUNT == 27,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")    == 0) return OP_PLUS;
@@ -190,6 +209,8 @@ op_type_t op_name_type(const char *name) {
     if (strcmp(name, "while")== 0) return OP_WHILE;
     if (strcmp(name, "do")   == 0) return OP_DO;
     if (strcmp(name, "let")  == 0) return OP_LET;
-    if (strcmp(name, "set")  == 0) return OP_SET;
+    if (strcmp(name, "set")  == 0) return OP_SET_VALUE; // COULD ALSO BE OP_SET_AT_PTR LATER
+    if (strcmp(name, "mem")  == 0) return OP_MEM;
+    if (strcmp(name, "load") == 0) return OP_LOAD;
     return OP_IDENT;
 }
