@@ -25,6 +25,10 @@ void err_print(err_type_t type, err_ctx_t ctx) {
         fprintf(stderr, "%s:%zu:%zu: error: identifier `%s` exceeds maximum length of %d.\n",
                 ctx.file, ctx.row, ctx.col, ctx.name, MAX_IDENTIFIER_LENGTH);
         break;
+    case ERR_UNCLOSED_STRING_LITERAL:
+        fprintf(stderr, "%s:%zu:%zu: error: unclosed string literal.\n",
+                ctx.file, ctx.row, ctx.col);
+        break;
     }
 }
 

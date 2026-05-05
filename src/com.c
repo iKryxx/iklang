@@ -8,6 +8,7 @@
 #include "parse.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 static const char *comp_op_to_set_instr(op_type_t op) {
     switch (op) {
@@ -19,6 +20,81 @@ static const char *comp_op_to_set_instr(op_type_t op) {
     case OP_NOT_EQUALS:    return "setne";
     default:               return "";
     }
+}
+
+static size_t unescape_byte_count(const char *str) {
+    size_t len = 0;
+    size_t src_len = strlen(str);
+    for (size_t i = 0; i < src_len; i++) {
+        if (str[i] == '\\' && i + 1 < src_len) {
+            switch (str[i + 1]) {
+                case 'n': case 't': case 'r': case '0':
+                case '\\': case '"':
+                    len++; i++; break;
+                default:
+                    len++; break;
+            }
+        } else {
+            len++;
+        }
+    }
+    return len;
+}
+
+char* unescape_to_nasm(char *str) {
+    const char *src = str;
+    size_t src_len = strlen(src);
+
+    /* worst case: every char becomes ", 255" (6 bytes) + ", 0" + null */
+    char *dst = malloc(src_len * 6 + 7);
+    if (!dst) perror("malloc");
+
+    size_t w = 0;
+    int in_str = 0;
+
+    #define OPEN_STR()   do { if (!in_str) { dst[w++] = '"'; in_str = 1; } } while(0)
+    #define CLOSE_STR()  do { if (in_str)  { dst[w++] = '"'; in_str = 0; } } while(0)
+    #define EMIT_BYTE(b) do {                                       \
+        CLOSE_STR();                                                \
+        if(dst[w - 2] == ',')                                       \
+            w += sprintf(&dst[w], "%d, ", (unsigned char)(b));      \
+        else                                                        \
+            w += sprintf(&dst[w], ", %d, ", (unsigned char)(b));    \
+    } while(0)
+
+    OPEN_STR();
+
+    for (size_t i = 0; i < src_len; i++) {
+        if (src[i] == '\\' && i + 1 < src_len) {
+            switch (src[i + 1]) {
+                case 'n':  EMIT_BYTE(10);   i++; break;
+                case 't':  EMIT_BYTE(9);    i++; break;
+                case 'r':  EMIT_BYTE(13);   i++; break;
+                case '0':  EMIT_BYTE(0);    i++; break;
+                case '\\': EMIT_BYTE('\\'); i++; break;
+                case '"':  EMIT_BYTE('"');  i++; break;
+                default:
+                    OPEN_STR();
+                    dst[w++] = src[i]; /* keep backslash for unknown escapes */
+                    break;
+            }
+        } else {
+            OPEN_STR();
+            dst[w++] = src[i];
+        }
+    }
+
+    CLOSE_STR();
+    if(dst[w - 2] == ',')
+        dst[w - 2] = '\0';
+    else
+        dst[w] = '\0';
+
+    #undef OPEN_STR
+    #undef CLOSE_STR
+    #undef EMIT_BYTE
+
+    return dst;
 }
 
 void append_builtins(FILE *f) {
@@ -206,12 +282,25 @@ void append_bindings(da_t *prog, FILE *f) {
         op_t *op = (op_t *)da_get(prog, i);
 
         if (op->type != OP_LET) continue;
-        fprintf(f, "%s resq 1\n", op->name);
+        fprintf(f, "res_%s resq 1\n", op->name);
+    }
+}
+
+void append_strings(da_t *prog, FILE *f) {
+    fprintf(f, "; ----- STRINGS -----\n");
+    for(size_t i = 0; i < prog->length; i++) {
+        op_t *op = (op_t*)da_get(prog, i);
+
+        if(op->type != OP_STRING_LITERAL) continue;
+        
+        char *nasm_str = unescape_to_nasm(op->str_literal);
+        fprintf(f, "strlit_%zu: db %s\n", i, nasm_str);
+        free(nasm_str);
     }
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 27,
+    _Static_assert(OP_COUNT == 29,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -224,6 +313,7 @@ int compile(da_t *prog) {
     fprintf(f, "section .data\n");
     fprintf(f, "div_zero_msg: db \"error: division by zero\", 10\n");
     fprintf(f, "out_of_bounds_msg: db \"error: array out of bounds access\", 10\n");
+    append_strings(prog, f);
     append_bindings(prog, f);
     fprintf(f, "section .text\n");
     append_builtins(f);
@@ -346,23 +436,23 @@ int compile(da_t *prog) {
         case OP_LET:
             fprintf(f, "    ; <OP_LET>\n");
             fprintf(f, "    pop rax\n");
-            fprintf(f, "    mov qword [%s], rax\n", op->name);
+            fprintf(f, "    mov qword [res_%s], rax\n", op->name);
             break;
         case OP_SET_VALUE:
             fprintf(f, "    ; <OP_SET>\n");
             fprintf(f, "    pop rax\n");
-            fprintf(f, "    mov qword [%s], rax\n", op->name);
+            fprintf(f, "    mov qword [res_%s], rax\n", op->name);
             break;
         case OP_SET_ARR_IDX:
             fprintf(f, "    ; <OP_SET_ARR_IDX>\n");
-            fprintf(f, "    mov r10, [%s]\n", op->name);  // array base ptr
+            fprintf(f, "    mov r10, [res_%s]\n", op->name);  // array base ptr
             fprintf(f, "    pop rsi\n");                   // index
             fprintf(f, "    pop r8\n");                    // value
             fprintf(f, "    call set_arr_idx\n");
             break;
         case OP_LOAD:
             fprintf(f, "    ; <OP_LOAD>\n");
-            fprintf(f, "    mov r10, [%s]\n", op->name);  // array base ptr
+            fprintf(f, "    mov r10, [res_%s]\n", op->name);  // array base ptr
             fprintf(f, "    pop rsi\n");                   // index
             fprintf(f, "    call load\n");
             fprintf(f, "    push rax\n");
@@ -371,13 +461,28 @@ int compile(da_t *prog) {
             break;
         case OP_PUSH_IDENT:
             fprintf(f, "    ; <OP_PUSH_IDENT>\n");
-            fprintf(f, "    push qword [%s]\n", op->name);
+            fprintf(f, "    push qword [res_%s]\n", op->name);
             break;
         case OP_MEM:
             fprintf(f, "    ; <OP_MEM>\n");
             fprintf(f, "    pop rcx\n");    // stride (top of stack)
             fprintf(f, "    pop rdx\n");    // size
             fprintf(f, "    call mem\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_STRING_LITERAL:
+            fprintf(f, "    ; <OP_STRING_LITERAL>\n");
+            fprintf(f, "    mov rdx, %zu\n", unescape_byte_count(op->str_literal));
+            fprintf(f, "    push rdx\n");
+            fprintf(f, "    push strlit_%zu\n", i);
+            break;
+        case OP_SYSCALL3:
+            fprintf(f, "    ; <OP_SYSCALL3>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    pop rdi\n");
+            fprintf(f, "    pop rsi\n");
+            fprintf(f, "    pop rdx\n");
+            fprintf(f, "    syscall\n");
             fprintf(f, "    push rax\n");
             break;
         default:

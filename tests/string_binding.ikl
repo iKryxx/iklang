@@ -1,0 +1,2 @@
+"hello\n" s_ptr let s_len let
+s_len s_ptr 1 1 syscall3

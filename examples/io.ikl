@@ -1,0 +1,10 @@
+"Hello, What is your name?\n> " 1 1 syscall3 
+
+512 1 mem buf let
+0 buf_n let
+
+buf 0 0 syscall3 buf_n set
+0 buf_n buf load set
+
+"Greetings, " 1 1 syscall3
+buf 1 1 syscall3 

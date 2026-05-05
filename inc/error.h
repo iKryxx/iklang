@@ -9,6 +9,7 @@ typedef enum {
     ERR_UNDEFINED_SYMBOL,
     ERR_REDEFINITION,
     ERR_IDENTIFIER_TOO_LONG,
+    ERR_UNCLOSED_STRING_LITERAL,
 } err_type_t;
 
 typedef struct {

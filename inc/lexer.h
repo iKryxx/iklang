@@ -16,6 +16,7 @@ typedef struct {
     union {
         long long ival;
         size_t jmp_addr;
+        char* str_value;
     };
     struct {
         const char *file;

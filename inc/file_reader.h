@@ -4,9 +4,9 @@
 #include "da.h"
 
 typedef struct {
-    const char *file_name;
+    const char *file;
     unsigned long long row;
-    unsigned long long column;
+    unsigned long long col;
     const char *token;
     int token_len;
 } text_token_t;

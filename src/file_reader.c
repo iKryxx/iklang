@@ -1,4 +1,5 @@
 #include "file_reader.h"
+#include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,10 +43,28 @@ void tokenize_file(const char *text, const char *filename, da_t *out) {
         } else {
             text_token_t new_token = {0};
 
-            new_token.file_name = filename;
+            new_token.file = filename;
             new_token.row = row;
-            new_token.column = col;
+            new_token.col = col;
             new_token.token = text;
+
+            if(*text == '"') {
+                const char *qti = strchr(text + 1, '"');
+                const char *nli = strchr(text + 1, '\n');
+                if(qti == NULL) 
+                    err_throw(ERR_UNCLOSED_STRING_LITERAL, ERR_CTX(new_token,""));
+                if(nli != NULL && nli < qti) {
+                    err_throw(ERR_UNCLOSED_STRING_LITERAL, ERR_CTX(new_token, ""));
+                }
+
+                int token_len = (int)(qti - text);
+                new_token.token_len = token_len + 1;
+                text += token_len + 1;
+                col += token_len + 1;
+
+                da_push(out, &new_token);
+                continue;
+            }
 
             const char *wsi = strchr(text, ' ');
             const char *nli = strchr(text, '\n');

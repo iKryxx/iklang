@@ -13,7 +13,7 @@ static inline int _idx_cmp_char_arr(const da_t *arr, size_t i, void *data) {
 }
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 22 &&
+    assert(TOKEN_IDENT_COUNT == 23 &&
            "Exhaustive handling of token types inside parse");
 
     lexer_t lex;
@@ -122,6 +122,10 @@ void parse(da_t *prog, const char *src) {
                 strcpy(op->name, tok.name);
             }
             break;
+        case TOKEN_STRING:
+            op->type = OP_STRING_LITERAL;
+            op->str_literal = tok.str_value;
+            break;
         case TOKEN_EOF:
             da_pop(prog);
             continue;
@@ -151,7 +155,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 27,
+    _Static_assert(OP_COUNT == 29,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -182,35 +186,39 @@ const char *op_type_name(op_type_t o) {
     case OP_PUSH_IDENT:     return "OP_PUSH_IDENT";
     case OP_MEM:            return "OP_MEM";
     case OP_LOAD:           return "OP_LOAD";
+    case OP_STRING_LITERAL: return "OP_STRING_LITERAL";
+    case OP_SYSCALL3:       return "OP_SYSCALL3";
     default:                return "OP_UNKNOWN";
     }
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 27,
+    _Static_assert(OP_COUNT == 29,
                    "Exhaustive handling of operator types inside op_name_type");
 
-    if (strcmp(name, "+")    == 0) return OP_PLUS;
-    if (strcmp(name, "-")    == 0) return OP_MINUS;
-    if (strcmp(name, "*")    == 0) return OP_STAR;
-    if (strcmp(name, "/")    == 0) return OP_SLASH;
-    if (strcmp(name, "=")    == 0) return OP_EQUALS;
-    if (strcmp(name, ">")    == 0) return OP_GREATER;
-    if (strcmp(name, ">=")   == 0) return OP_GREATER_EQUALS;
-    if (strcmp(name, "<")    == 0) return OP_LESS;
-    if (strcmp(name, "<=")   == 0) return OP_LESS_EQUALS;
-    if (strcmp(name, "!")    == 0) return OP_NOT;
-    if (strcmp(name, "!=")   == 0) return OP_NOT_EQUALS;
-    if (strcmp(name, "dump") == 0) return OP_DUMP;
-    if (strcmp(name, "dup")  == 0) return OP_DUP;
-    if (strcmp(name, "if")   == 0) return OP_IF;
-    if (strcmp(name, "end")  == 0) return OP_ENDIF; // COULD ALSO BE OP_ENDWHILE LATER
-    if (strcmp(name, "else") == 0) return OP_ELSE;
-    if (strcmp(name, "while")== 0) return OP_WHILE;
-    if (strcmp(name, "do")   == 0) return OP_DO;
-    if (strcmp(name, "let")  == 0) return OP_LET;
-    if (strcmp(name, "set")  == 0) return OP_SET_VALUE; // COULD ALSO BE OP_SET_AT_PTR LATER
-    if (strcmp(name, "mem")  == 0) return OP_MEM;
-    if (strcmp(name, "load") == 0) return OP_LOAD;
+    if (strcmp(name, "+")        == 0) return OP_PLUS;
+    if (strcmp(name, "-")        == 0) return OP_MINUS;
+    if (strcmp(name, "*")        == 0) return OP_STAR;
+    if (strcmp(name, "/")        == 0) return OP_SLASH;
+    if (strcmp(name, "=")        == 0) return OP_EQUALS;
+    if (strcmp(name, ">")        == 0) return OP_GREATER;
+    if (strcmp(name, ">=")       == 0) return OP_GREATER_EQUALS;
+    if (strcmp(name, "<")        == 0) return OP_LESS;
+    if (strcmp(name, "<=")       == 0) return OP_LESS_EQUALS;
+    if (strcmp(name, "!")        == 0) return OP_NOT;
+    if (strcmp(name, "!=")       == 0) return OP_NOT_EQUALS;
+    if (strcmp(name, "dump")     == 0) return OP_DUMP;
+    if (strcmp(name, "dup")      == 0) return OP_DUP;
+    if (strcmp(name, "if")       == 0) return OP_IF;
+    if (strcmp(name, "end")      == 0) return OP_ENDIF; // COULD ALSO BE OP_ENDWHILE LATER
+    if (strcmp(name, "else")     == 0) return OP_ELSE;
+    if (strcmp(name, "while")    == 0) return OP_WHILE;
+    if (strcmp(name, "do")       == 0) return OP_DO;
+    if (strcmp(name, "let")      == 0) return OP_LET;
+    if (strcmp(name, "set")      == 0) return OP_SET_VALUE; // COULD ALSO BE OP_SET_AT_PTR LATER
+    if (strcmp(name, "mem")      == 0) return OP_MEM;
+    if (strcmp(name, "load")     == 0) return OP_LOAD;
+    if (strcmp(name, "syscall3") == 0) return OP_SYSCALL3;
+    // ignore OP_STRING as its not TOK_IDENT
     return OP_IDENT;
 }

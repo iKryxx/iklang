@@ -33,6 +33,8 @@ typedef enum {
     OP_PUSH_IDENT,
     OP_MEM,
     OP_LOAD,
+    OP_STRING_LITERAL,
+    OP_SYSCALL3,
     OP_COUNT
 } op_type_t;
 
@@ -42,6 +44,7 @@ typedef struct {
     union {
         long long ival;
         size_t jmp_addr;
+        char *str_literal;
     };
     struct {
         const char *file;

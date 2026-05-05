@@ -56,9 +56,16 @@ token_t lexer_next(lexer_t *l) {
 
     text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
 
-    _Static_assert(TOKEN_COUNT == 3, "Exhaustive handling of token types inside lexer_next");
-
-    if (is_number(&cur_tt)) {
+    _Static_assert(TOKEN_COUNT == 4, "Exhaustive handling of token types inside lexer_next");
+    
+    if(*cur_tt.token == '"') {
+        tok.type = TOKEN_STRING;
+        tok.str_value = malloc(cur_tt.token_len - 1); // - 2 * '"', + '\0'
+        if(!tok.str_value) perror("malloc");
+        strncpy(tok.str_value, cur_tt.token + 1, cur_tt.token_len - 2);
+        tok.str_value[cur_tt.token_len - 2] = '\0'; 
+    }
+    else if (is_number(&cur_tt)) {
         tok.type = TOKEN_NUMBER;
         tok.ival = str_to_int(cur_tt.token, cur_tt.token_len);
     } else {
@@ -66,9 +73,9 @@ token_t lexer_next(lexer_t *l) {
         strncpy(tok.name, cur_tt.token, cur_tt.token_len);
     }
 
-    tok.location.file = cur_tt.file_name;
+    tok.location.file = cur_tt.file;
     tok.location.row = cur_tt.row;
-    tok.location.col = cur_tt.column;
+    tok.location.col = cur_tt.col;
 
     l->pos++;
     return tok;
