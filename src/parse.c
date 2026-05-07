@@ -10,6 +10,11 @@ typedef struct {
     da_t ops;
 } macro_t;
 
+typedef struct {
+    char name[MAX_IDENTIFIER_LENGTH + 1];
+    struct { const char *file; size_t row; size_t col; } location;
+} bind_ref_t;
+
 static inline int _idx_cmp_char_arr(const da_t *arr, size_t i, void *data) {
     char *cur = (char *)da_get(arr, i);
     if (cur != NULL && data != NULL)
@@ -34,7 +39,7 @@ void parse(da_t *prog, const char *src) {
 
     *prog = da_new(op_t);
     da_t cross_reference_stack = da_new(size_t);
-    da_t bind_reference_stack = da_new(size_t);
+    da_t bind_reference_stack = da_new(bind_ref_t);
     da_t bindings_list = da_new(char[MAX_IDENTIFIER_LENGTH + 1]);
     bindings_list.compare_cb = &_idx_cmp_char_arr;
     da_t macros_list = da_new(macro_t);
@@ -104,11 +109,10 @@ void parse(da_t *prog, const char *src) {
                 }
                 case OP_LET: {
                     if (bind_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
-                    op_t *ident_op = (op_t *)da_get(cur_op_list, *(size_t *)da_pop(&bind_reference_stack) - 1);
-                    if (ident_op->type != OP_IDENT) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
-                    if (da_has(&bindings_list, ident_op->name)) err_throw(ERR_REDEFINITION, ERR_CTX(ident_op->location, ident_op->name));
-                    strcpy(op->name, ident_op->name);
-                    da_push(&bindings_list, &ident_op->name);
+                    bind_ref_t ref = *(bind_ref_t *)da_pop(&bind_reference_stack);
+                    if (da_has(&bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
+                    strcpy(op->name, ref.name);
+                    da_push(&bindings_list, ref.name);
                     break;
                 }
                 case OP_SET_VALUE: {
@@ -141,10 +145,9 @@ void parse(da_t *prog, const char *src) {
                     da_pop(prog); op = da_push(cur_op_list, op);
                     da_push(&cross_reference_stack, &cur_op_list->length);
                     if (bind_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
-                    op_t *ident_op = (op_t *)da_get(prog, *(size_t *)da_pop(&bind_reference_stack) - 1);
-                    if (ident_op->type != OP_IDENT) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
-                    if (da_has(&bindings_list, ident_op->name)) err_throw(ERR_REDEFINITION, ERR_CTX(ident_op->location, ident_op->name));
-                    strcpy(cur_macro.name, ident_op->name);
+                    bind_ref_t ref = *(bind_ref_t *)da_pop(&bind_reference_stack);
+                    if (da_has(&bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
+                    strcpy(cur_macro.name, ref.name);
                     is_in_macro = true;
                     break;
                 }
@@ -177,7 +180,10 @@ void parse(da_t *prog, const char *src) {
                     if (strlen(tok.name) > MAX_IDENTIFIER_LENGTH)
                         err_throw(ERR_IDENTIFIER_TOO_LONG, ERR_CTX(tok.location, tok.name));
                     op->type = OP_IDENT;
-                    da_push(&bind_reference_stack, &cur_op_list->length);
+                    bind_ref_t _ref = {0};
+                    strcpy(_ref.name, tok.name);
+                    memcpy(&_ref.location, &tok.location, sizeof(tok.location));
+                    da_push(&bind_reference_stack, &_ref);
                 }
                 strcpy(op->name, tok.name);
             }
@@ -205,8 +211,8 @@ void parse(da_t *prog, const char *src) {
     }
     if (bind_reference_stack.length != 0) {
         while (bind_reference_stack.length > 0) {
-            op_t *op = (op_t *)da_get(prog, *(size_t *)da_pop(&bind_reference_stack) - 1);
-            err_print(ERR_UNDEFINED_SYMBOL, ERR_CTX(op->location, op->name));
+            bind_ref_t ref = *(bind_ref_t *)da_pop(&bind_reference_stack);
+            err_print(ERR_UNDEFINED_SYMBOL, ERR_CTX(ref.location, ref.name));
         }
         exit(1);
     }
