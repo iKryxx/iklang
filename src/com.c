@@ -300,7 +300,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 29,
+    _Static_assert(OP_COUNT == 31,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -485,6 +485,9 @@ int compile(da_t *prog) {
             fprintf(f, "    syscall\n");
             fprintf(f, "    push rax\n");
             break;
+        case OP_MACRO:
+            fprintf(stderr, "critical error: unreachable reached inside compile()\n");
+            exit(1);
         default:
             fprintf(stderr, "%s:%zu:%zu: error: unknown Operator `%d` reached.\n",
                     op->location.file, op->location.row, op->location.col, op->type);

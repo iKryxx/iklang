@@ -83,3 +83,13 @@ bool da_has(const da_t *arr, void *data) {
 
     return false;
 }
+
+size_t da_idx_of(const da_t *arr, void *data) {
+    if(arr->compare_cb == NULL) return (size_t)-1;
+
+    for(size_t i = 0; i < arr->length; i++) {
+        if (arr->compare_cb(arr, i, data) == 0) return i;
+    }
+
+    return (size_t)-1;
+}

@@ -47,4 +47,7 @@ void da_remove(da_t *arr, size_t i);
 void da_free(da_t *arr);
 
 bool da_has(const da_t *arr, void *data);
+
+size_t da_idx_of(const da_t *arr, void *data);
+
 #endif

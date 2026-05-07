@@ -29,6 +29,10 @@ void err_print(err_type_t type, err_ctx_t ctx) {
         fprintf(stderr, "%s:%zu:%zu: error: unclosed string literal.\n",
                 ctx.file, ctx.row, ctx.col);
         break;
+    case ERR_NESTED_MACRO_DEFINITION:
+        fprintf(stderr, "%s:%zu:%zu: error: macros cannot be declared in other macros.\n",
+                ctx.file, ctx.row, ctx.col);
+        break;
     }
 }
 

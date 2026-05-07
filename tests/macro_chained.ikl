@@ -1,0 +1,10 @@
+double macro
+    2 *
+end
+
+quadruple macro
+    double double
+end
+
+3 quadruple dump
+5 quadruple dump

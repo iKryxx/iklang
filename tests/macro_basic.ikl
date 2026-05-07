@@ -1,0 +1,7 @@
+double macro
+    2 *
+end
+
+5 double dump
+3 double dump
+10 double dump

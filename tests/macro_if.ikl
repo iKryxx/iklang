@@ -1,0 +1,19 @@
+above_zero macro
+    0 > if
+        1
+    else
+        0
+    end
+end
+
+5 above_zero dump
+
+below_zero macro
+    0 < if
+        1
+    else
+        0
+    end
+end
+
+3 below_zero dump

@@ -18,6 +18,8 @@ void print_ops(da_t *prog) {
         case OP_IF:
         case OP_ENDIF:
         case OP_ELSE:
+        case OP_DO:
+        case OP_WHILE:
             printf(" (%zu)", cur->jmp_addr);
             break;
         case OP_LET:
@@ -50,7 +52,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: file `%s` does not exist\n", file);
         return 1;
     }
-
+    
     parse(&prog, file);
     compile(&prog);
 

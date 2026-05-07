@@ -35,6 +35,8 @@ typedef enum {
     OP_LOAD,
     OP_STRING_LITERAL,
     OP_SYSCALL3,
+    OP_MACRO,
+    OP_ENDMACRO,
     OP_COUNT
 } op_type_t;
 

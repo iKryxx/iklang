@@ -1,0 +1,10 @@
+3 n let
+
+count_down macro
+    while n 0 > do
+        n dump
+        n 1 - n set
+    end
+end
+
+count_down
