@@ -5,9 +5,10 @@
 #include "token.h"
 
 typedef struct {
-    char *buf;  // Heap-allocated source file content; owned by lexer
-    da_t src;   // Text tokens referencing into buf
-    size_t pos; // current position in src
+    char *buf;   // Heap-allocated source file content; owned by lexer
+    da_t src;    // Text tokens referencing into buf
+    size_t pos;  // current position in src
+    da_t tokens; // lexed tokens, filled after lexer_init
 } lexer_t;
 
 typedef struct {

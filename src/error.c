@@ -33,6 +33,14 @@ void err_print(err_type_t type, err_ctx_t ctx) {
         fprintf(stderr, "%s:%zu:%zu: error: macros cannot be declared in other macros.\n",
                 ctx.file, ctx.row, ctx.col);
         break;
+    case ERR_CIRCULAR_INCLUDE:
+        fprintf(stderr, "%s:%zu:%zu: error: circular include of `%s`.\n",
+                ctx.file, ctx.row, ctx.col, ctx.name);
+        break;
+    case ERR_DOUBLE_INCLUDE:
+        fprintf(stderr, "%s:%zu:%zu: error: `%s` has already been included.\n",
+                ctx.file, ctx.row, ctx.col, ctx.name);
+        break;
     }
 }
 

@@ -300,7 +300,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 31,
+    _Static_assert(OP_COUNT == 32,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");

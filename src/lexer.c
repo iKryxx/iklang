@@ -32,11 +32,52 @@ bool is_number(const text_token_t *tt) {
     return true;
 }
 
+void lexer_lex_entire_file(lexer_t *l) {
+    l->tokens = da_new(token_t);
+    for(;;) {
+        token_t tok = {0};
+
+        // end
+        if (l->pos == l->src.length) {
+            tok.type = TOKEN_EOF;
+            da_push(&l->tokens, &tok);
+            break;
+        }
+
+        text_token_t cur_tt = *(text_token_t *)da_get(&l->src, l->pos);
+
+        _Static_assert(TOKEN_COUNT == 4, "Exhaustive handling of token types inside lexer_next");
+    
+        if(*cur_tt.token == '"') {
+            tok.type = TOKEN_STRING;
+            tok.str_value = malloc(cur_tt.token_len - 1); // - 2 * '"', + '\0'
+            if(!tok.str_value) perror("malloc");
+            strncpy(tok.str_value, cur_tt.token + 1, cur_tt.token_len - 2);
+            tok.str_value[cur_tt.token_len - 2] = '\0'; 
+        }
+        else if (is_number(&cur_tt)) {
+            tok.type = TOKEN_NUMBER;
+            tok.ival = str_to_int(cur_tt.token, cur_tt.token_len);
+        } else {
+            tok.type = TOKEN_IDENT;
+            strncpy(tok.name, cur_tt.token, cur_tt.token_len);
+        }
+
+        tok.location.file = cur_tt.file;
+        tok.location.row = cur_tt.row;
+        tok.location.col = cur_tt.col;
+
+        l->pos++;
+        da_push(&l->tokens, &tok);
+    }
+}
+
 void lexer_init(lexer_t *l, const char *src) {
     l->buf = NULL;
     read_entire_file(src, &l->buf);
     tokenize_file(l->buf, src, &l->src);
     l->pos = 0;
+    lexer_lex_entire_file(l);
 }
 
 void lexer_free(lexer_t *l) {
@@ -76,7 +117,7 @@ token_t lexer_next(lexer_t *l) {
     tok.location.file = cur_tt.file;
     tok.location.row = cur_tt.row;
     tok.location.col = cur_tt.col;
-
+    
     l->pos++;
     return tok;
 }

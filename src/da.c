@@ -65,6 +65,20 @@ void da_remove(da_t *arr, size_t i) {
             (--arr->length - i) * arr->stride);
 }
 
+void *da_insert(da_t *arr, size_t i, const void *data) {
+    if (arr->is_static || i >= arr->length) return NULL;
+
+    if (arr->length == arr->cap)
+        da_grow(arr);
+
+    unsigned char *dst = (unsigned char *)arr->data + arr->stride * i;
+
+    memmove(dst + arr->stride, dst, arr->stride * (arr->length - i));
+    memcpy(dst, data, arr->stride);
+    arr->length++;
+    return dst;
+}
+
 void da_free(da_t *arr) {
     if (arr->is_static) return;
     free(arr->data);

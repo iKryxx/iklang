@@ -44,6 +44,8 @@ void *da_get(const da_t *arr, size_t i);
 
 void da_remove(da_t *arr, size_t i);
 
+void *da_insert(da_t *arr, size_t i, const void *data);
+
 void da_free(da_t *arr);
 
 bool da_has(const da_t *arr, void *data);

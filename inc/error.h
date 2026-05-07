@@ -11,6 +11,8 @@ typedef enum {
     ERR_IDENTIFIER_TOO_LONG,
     ERR_UNCLOSED_STRING_LITERAL,
     ERR_NESTED_MACRO_DEFINITION,
+    ERR_CIRCULAR_INCLUDE,
+    ERR_DOUBLE_INCLUDE,
 } err_type_t;
 
 typedef struct {

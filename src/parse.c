@@ -1,9 +1,16 @@
+#define _GNU_SOURCE
 #include "parse.h"
 #include "error.h"
 #include "lexer.h"
 #include <assert.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef IKLANG_LIB_DIR
+#define IKLANG_LIB_DIR "/usr/local/lib/iklang"
+#endif
 
 typedef struct {
     char name [MAX_IDENTIFIER_LENGTH + 1];
@@ -29,28 +36,29 @@ static inline int _idx_cmp_op_arr_name(const da_t *arr, size_t i, void *data) {
     return -1;
 }
 
-
-void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 24 &&
-           "Exhaustive handling of token types inside parse");
-
+static void parse_file(
+    const char *src,
+    da_t *prog,
+    da_t *bindings_list,
+    da_t *macros_list,
+    da_t *active_includes,
+    da_t *done_includes
+) {
     lexer_t lex;
     lexer_init(&lex, src);
 
-    *prog = da_new(op_t);
     da_t cross_reference_stack = da_new(size_t);
     da_t bind_reference_stack = da_new(bind_ref_t);
-    da_t bindings_list = da_new(char[MAX_IDENTIFIER_LENGTH + 1]);
-    bindings_list.compare_cb = &_idx_cmp_char_arr;
-    da_t macros_list = da_new(macro_t);
-    macros_list.compare_cb = &_idx_cmp_op_arr_name;
 
     token_t tok;
     bool is_in_macro = false;
     macro_t cur_macro = { 0 };
 
+    size_t tok_i = 0;
+
     do {
-        tok = lexer_next(&lex);
+        tok = *(token_t*)da_get(&lex.tokens, tok_i++);
+
         op_t new_op = {0};
         da_t *cur_op_list = is_in_macro ? &cur_macro.ops : prog;
         op_t *op = da_push(cur_op_list, &new_op);
@@ -87,7 +95,7 @@ void parse(da_t *prog, const char *src) {
                         block_begin->jmp_addr = cur_op_list->length - 1;
                         op->type = OP_ENDWHILE;
                     } else if (block_begin->type == OP_MACRO) {
-                        da_push(&macros_list, &cur_macro);
+                        da_push(macros_list, &cur_macro);
                         op->type = OP_ENDMACRO;
                         is_in_macro = false;
                     } else {
@@ -110,9 +118,9 @@ void parse(da_t *prog, const char *src) {
                 case OP_LET: {
                     if (bind_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
                     bind_ref_t ref = *(bind_ref_t *)da_pop(&bind_reference_stack);
-                    if (da_has(&bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
+                    if (da_has(bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
                     strcpy(op->name, ref.name);
-                    da_push(&bindings_list, ref.name);
+                    da_push(bindings_list, ref.name);
                     break;
                 }
                 case OP_SET_VALUE: {
@@ -146,20 +154,50 @@ void parse(da_t *prog, const char *src) {
                     da_push(&cross_reference_stack, &cur_op_list->length);
                     if (bind_reference_stack.length == 0) err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
                     bind_ref_t ref = *(bind_ref_t *)da_pop(&bind_reference_stack);
-                    if (da_has(&bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
+                    if (da_has(bindings_list, ref.name)) err_throw(ERR_REDEFINITION, ERR_CTX(ref.location, ref.name));
                     strcpy(cur_macro.name, ref.name);
                     is_in_macro = true;
                     break;
+                }
+                case OP_INCLUDE: {
+                    op_t *prev_op = da_get(cur_op_list, cur_op_list->length - 2);
+                    if (prev_op == NULL || prev_op->type != OP_STRING_LITERAL)
+                        err_throw(ERR_UNEXPECTED_KEYWORD, ERR_CTX(tok.location, tok.name));
+
+                    char canonical[PATH_MAX];
+                    if (realpath(prev_op->str_literal, canonical) == NULL) {
+                        char lib_path[PATH_MAX];
+                        snprintf(lib_path, sizeof(lib_path), "%s/%s", IKLANG_LIB_DIR, prev_op->str_literal);
+                        if (realpath(lib_path, canonical) == NULL) {
+                            fprintf(stderr, "error: include '%s' not found (searched './' and '%s')\n",
+                                    prev_op->str_literal, IKLANG_LIB_DIR);
+                            exit(1);
+                        }
+                    }
+
+                    if (da_has(active_includes, canonical))
+                        err_throw(ERR_CIRCULAR_INCLUDE, ERR_CTX(tok.location, prev_op->str_literal));
+                    if (da_has(done_includes, canonical))
+                        err_throw(ERR_DOUBLE_INCLUDE, ERR_CTX(tok.location, prev_op->str_literal));
+
+                    da_pop(cur_op_list);
+                    da_pop(cur_op_list);
+
+                    da_push(active_includes, canonical);
+                    parse_file(canonical, prog, bindings_list, macros_list, active_includes, done_includes);
+                    da_pop(active_includes);
+                    da_push(done_includes, canonical);
+                    continue;
                 }
                 default:
                     break;
                 }
             } else {
-                if (da_has(&bindings_list, tok.name)) {
+                if (da_has(bindings_list, tok.name)) {
                     op->type = OP_PUSH_IDENT;
-                } else if (da_has(&macros_list, tok.name)) {
+                } else if (da_has(macros_list, tok.name)) {
                     da_pop(cur_op_list);
-                    macro_t *macro = da_get(&macros_list, da_idx_of(&macros_list, tok.name));
+                    macro_t *macro = da_get(macros_list, da_idx_of(macros_list, tok.name));
                     size_t offset = cur_op_list->length;
                     for (size_t i = 1; i < macro->ops.length - 1; i++) {
                         op_t *macro_op = da_get(&macro->ops, i);
@@ -220,8 +258,37 @@ void parse(da_t *prog, const char *src) {
     lexer_free(&lex);
 }
 
+
+void parse(da_t *prog, const char *src) {
+    assert(TOKEN_IDENT_COUNT == 25 &&
+           "Exhaustive handling of token types inside parse");
+
+    *prog = da_new(op_t);
+
+    da_t bindings_list = da_new(char[MAX_IDENTIFIER_LENGTH + 1]);
+    bindings_list.compare_cb = &_idx_cmp_char_arr;
+    da_t macros_list = da_new(macro_t);
+    macros_list.compare_cb = &_idx_cmp_op_arr_name;
+
+    da_t active_includes = da_new(char[PATH_MAX]);
+    active_includes.compare_cb = &_idx_cmp_char_arr;
+    da_t done_includes = da_new(char[PATH_MAX]);
+    done_includes.compare_cb = &_idx_cmp_char_arr;
+
+    char canonical[PATH_MAX];
+    if (realpath(src, canonical) == NULL) {
+        perror(src);
+        exit(1);
+    }
+
+    da_push(&active_includes, canonical);
+    parse_file(canonical, prog, &bindings_list, &macros_list, &active_includes, &done_includes);
+    da_pop(&active_includes);
+    da_push(&done_includes, canonical);
+}
+
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 31,
+    _Static_assert(OP_COUNT == 32,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -256,12 +323,13 @@ const char *op_type_name(op_type_t o) {
     case OP_SYSCALL3:       return "OP_SYSCALL3";
     case OP_MACRO:          return "OP_MACRO";
     case OP_ENDMACRO:       return "OP_ENDMACRO";
+    case OP_INCLUDE:        return "OP_INCLUDE";
     default:                return "OP_UNKNOWN";
     }
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 31,
+    _Static_assert(OP_COUNT == 32,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")        == 0) return OP_PLUS;
@@ -288,6 +356,7 @@ op_type_t op_name_type(const char *name) {
     if (strcmp(name, "load")     == 0) return OP_LOAD;
     if (strcmp(name, "syscall3") == 0) return OP_SYSCALL3;
     if (strcmp(name, "macro")    == 0) return OP_MACRO;
+    if (strcmp(name, "include")  == 0) return OP_INCLUDE;
     // ignore OP_STRING as its not TOK_IDENT
     return OP_IDENT;
 }

@@ -37,6 +37,7 @@ typedef enum {
     OP_SYSCALL3,
     OP_MACRO,
     OP_ENDMACRO,
+    OP_INCLUDE,
     OP_COUNT
 } op_type_t;
 
