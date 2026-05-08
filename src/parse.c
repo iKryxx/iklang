@@ -260,7 +260,7 @@ static void parse_file(
 
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 25 &&
+    assert(TOKEN_IDENT_COUNT == 31 &&
            "Exhaustive handling of token types inside parse");
 
     *prog = da_new(op_t);
@@ -288,7 +288,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 32,
+    _Static_assert(OP_COUNT == 38,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -306,6 +306,12 @@ const char *op_type_name(op_type_t o) {
     case OP_NOT_EQUALS:     return "OP_NOT_EQUALS";
     case OP_DUMP:           return "OP_DUMP";
     case OP_DUP:            return "OP_DUP";
+    case OP_DROP:           return "OP_DROP";
+    case OP_SWAP:           return "OP_SWAP";
+    case OP_OVER:           return "OP_OVER";
+    case OP_ROT:            return "OP_ROT";
+    case OP_NIP:            return "OP_NIP";
+    case OP_TUCK:           return "OP_TUCK";
     case OP_IF:             return "OP_IF";
     case OP_ENDIF:          return "OP_END";
     case OP_ELSE:           return "OP_ELSE";
@@ -329,7 +335,7 @@ const char *op_type_name(op_type_t o) {
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 32,
+    _Static_assert(OP_COUNT == 38,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")        == 0) return OP_PLUS;
@@ -345,6 +351,12 @@ op_type_t op_name_type(const char *name) {
     if (strcmp(name, "!=")       == 0) return OP_NOT_EQUALS;
     if (strcmp(name, "dump")     == 0) return OP_DUMP;
     if (strcmp(name, "dup")      == 0) return OP_DUP;
+    if (strcmp(name, "drop")     == 0) return OP_DROP;
+    if (strcmp(name, "swap")     == 0) return OP_SWAP;
+    if (strcmp(name, "over")     == 0) return OP_OVER;
+    if (strcmp(name, "rot")      == 0) return OP_ROT;
+    if (strcmp(name, "nip")      == 0) return OP_NIP;
+    if (strcmp(name, "tuck")     == 0) return OP_TUCK;
     if (strcmp(name, "if")       == 0) return OP_IF;
     if (strcmp(name, "end")      == 0) return OP_ENDIF; // COULD ALSO BE OP_ENDWHILE OR OP_ENDMACRO LATER
     if (strcmp(name, "else")     == 0) return OP_ELSE;

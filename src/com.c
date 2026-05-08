@@ -300,7 +300,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 32,
+    _Static_assert(OP_COUNT == 38,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -403,6 +403,43 @@ int compile(da_t *prog) {
             fprintf(f, "    ; <OP_DUP>\n");
             fprintf(f, "    push qword [rsp]\n");
             break;
+        case OP_DROP:
+            fprintf(f, "    ; <OP_DROP>\n");
+            fprintf(f, "    add rsp, 8\n");
+            break;
+        case OP_SWAP:
+            fprintf(f, "    ; <OP_SWAP>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    pop rcx\n");
+            fprintf(f, "    push rax\n");
+            fprintf(f, "    push rcx\n");
+            break;
+        case OP_OVER:
+            fprintf(f, "    ; <OP_OVER>\n");
+            fprintf(f, "    push qword [rsp + 8]\n");
+            break;
+        case OP_ROT:
+            fprintf(f, "    ; <OP_ROT>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    pop rcx\n");
+            fprintf(f, "    pop rdx\n");
+            fprintf(f, "    push rcx\n");
+            fprintf(f, "    push rax\n");
+            fprintf(f, "    push rdx\n");
+            break;
+        case OP_NIP:
+            fprintf(f, "    ; <OP_NIP>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    mov [rsp], rax\n");
+            break;
+        case OP_TUCK:
+            fprintf(f, "    ; <OP_TUCK>\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    pop rcx\n");
+            fprintf(f, "    push rax\n");
+            fprintf(f, "    push rcx\n");
+            fprintf(f, "    push rax\n");
+            break;
         case OP_IF:
             fprintf(f, "    ; <OP_IF>\n");
             fprintf(f, "    pop rax\n");
@@ -486,6 +523,8 @@ int compile(da_t *prog) {
             fprintf(f, "    push rax\n");
             break;
         case OP_MACRO:
+        case OP_ENDMACRO:
+        case OP_INCLUDE:
             fprintf(stderr, "critical error: unreachable reached inside compile()\n");
             exit(1);
         default:

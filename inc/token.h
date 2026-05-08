@@ -10,7 +10,7 @@ static inline int _idx_cmp_str(const da_t *arr, size_t i, void *data) {
     return -1;
 }
 
-da_new_static(token_builtins, const char *, &_idx_cmp_str, "+", "-", "*", "/", "=", ">", ">=", "<", "<=", "!", "!=", "dump", "dup", "if", "end", "else", "while", "do", "let", "set", "mem", "load", "syscall3", "macro", "include");
+da_new_static(token_builtins, const char *, &_idx_cmp_str, "+", "-", "*", "/", "=", ">", ">=", "<", "<=", "!", "!=", "dump", "dup", "drop", "swap", "over", "rot", "nip", "tuck", "if", "end", "else", "while", "do", "let", "set", "mem", "load", "syscall3", "macro", "include");
 #define TOKEN_IDENT_COUNT token_builtins.length
 
 typedef enum {

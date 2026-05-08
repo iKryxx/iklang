@@ -204,13 +204,21 @@ Comparison operators pop two values and push `1` (true) or `0` (false). The righ
 
 ### Stack Operations
 
-| Token  | Description                              |
-|--------|------------------------------------------|
-| `dump` | Pop and print top of stack as decimal    |
-| `dup`  | Duplicate the top of stack               |
+| Token  | Stack effect        | Description                                      |
+|--------|---------------------|--------------------------------------------------|
+| `dump` | `( a -- )`          | Pop and print top of stack as decimal            |
+| `dup`  | `( a -- a a )`      | Duplicate the top of stack                       |
+| `drop` | `( a -- )`          | Discard the top of stack                         |
+| `swap` | `( a b -- b a )`    | Swap the top two elements                        |
+| `over` | `( a b -- a b a )`  | Copy the second element onto the top             |
+| `rot`  | `( a b c -- b c a )`| Rotate the top three: third comes to the top     |
+| `nip`  | `( a b -- b )`      | Discard the second element                       |
+| `tuck` | `( a b -- b a b )`  | Copy the top element below the second            |
 
 ```
-7 dup dump dump    -- prints 7 twice
+7 dup dump dump        -- prints 7 twice
+1 2 swap dump dump     -- prints 1 then 2  (swap: top comes second)
+1 2 3 rot dump dump dump   -- prints 1, 3, 2  (1 rotated to top)
 ```
 
 ---
