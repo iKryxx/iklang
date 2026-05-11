@@ -526,6 +526,27 @@ end
 128 1 mem buf let
 buf read 
 ```
+
+### `strlen`
+
+Pushes the length of a string on top of the stack.
+
+```
+strlen macro
+    0
+    while over over + l8 0 != do
+        1 +
+    end
+    1 -
+end
+```
+
+**Usage:** place a string literal on the stack, then call `strlen`.
+
+```
+"Hello, World!" strlen
+```
+
 ---
 
 ## Running Tests
