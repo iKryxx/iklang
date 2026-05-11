@@ -267,7 +267,7 @@ static void parse_file(
 
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 31 &&
+    assert(TOKEN_IDENT_COUNT == 35 &&
            "Exhaustive handling of token types inside parse");
 
     *prog = da_new(op_t);
@@ -295,7 +295,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 40,
+    _Static_assert(OP_COUNT == 44,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -334,6 +334,10 @@ const char *op_type_name(op_type_t o) {
     case OP_MEM:            return "OP_MEM";
     case OP_LOAD_IDENT:     return "OP_LOAD_IDENT";
     case OP_LOAD_ADDR:      return "OP_LOAD_ADDR";
+    case OP_LOAD_HWORD:     return "OP_LOAD_HWORD";
+    case OP_LOAD_SWORD:     return "OP_LOAD_SWORD";
+    case OP_LOAD_DWORD:     return "OP_LOAD_DWORD";
+    case OP_LOAD_QWORD:     return "OP_LOAD_QWORD";
     case OP_STRING_LITERAL: return "OP_STRING_LITERAL";
     case OP_SYSCALL3:       return "OP_SYSCALL3";
     case OP_MACRO:          return "OP_MACRO";
@@ -344,7 +348,7 @@ const char *op_type_name(op_type_t o) {
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 40,
+    _Static_assert(OP_COUNT == 44,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")        == 0) return OP_PLUS;
@@ -375,6 +379,10 @@ op_type_t op_name_type(const char *name) {
     if (strcmp(name, "set")      == 0) return OP_SET_VALUE; // COULD ALSO BE OP_SET_AT_PTR OR OP_SET_ADDR LATER 
     if (strcmp(name, "mem")      == 0) return OP_MEM;
     if (strcmp(name, "load")     == 0) return OP_LOAD_IDENT; // COULD ALSO BE OP_LOAD_ADDR LATER
+    if (strcmp(name, "l8")       == 0) return OP_LOAD_HWORD;
+    if (strcmp(name, "l16")      == 0) return OP_LOAD_SWORD;
+    if (strcmp(name, "l32")      == 0) return OP_LOAD_DWORD;
+    if (strcmp(name, "l64")      == 0) return OP_LOAD_QWORD;
     if (strcmp(name, "syscall3") == 0) return OP_SYSCALL3;
     if (strcmp(name, "macro")    == 0) return OP_MACRO;
     if (strcmp(name, "include")  == 0) return OP_INCLUDE;

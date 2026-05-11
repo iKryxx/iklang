@@ -41,6 +41,10 @@ typedef enum {
     OP_MEM,
     OP_LOAD_IDENT,
     OP_LOAD_ADDR,
+    OP_LOAD_HWORD, // 1 bytes
+    OP_LOAD_SWORD, // 2 bytes
+    OP_LOAD_DWORD, // 4 bytes
+    OP_LOAD_QWORD, // 8 bytes
     OP_STRING_LITERAL,
     OP_SYSCALL3,
     OP_MACRO,

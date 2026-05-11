@@ -85,6 +85,7 @@ char* unescape_to_nasm(char *str) {
     }
 
     CLOSE_STR();
+    EMIT_BYTE(0);
     if(dst[w - 2] == ',')
         dst[w - 2] = '\0';
     else
@@ -300,7 +301,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 40,
+    _Static_assert(OP_COUNT == 44,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -499,6 +500,29 @@ int compile(da_t *prog) {
             fprintf(f, "    pop rsi\n");                   // index
             fprintf(f, "    call load\n");
             fprintf(f, "    push rax\n");
+            break;
+        case OP_LOAD_HWORD:
+            fprintf(f, "    ; <OP_LOAD_HWORD>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    movzx rax, byte [r10]\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_LOAD_SWORD:
+            fprintf(f, "    ; <OP_LOAD_SWORD>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    movzx rax, word [r10]\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_LOAD_DWORD:
+            fprintf(f, "    ; <OP_LOAD_DWORD>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    mov eax, dword [r10]\n");
+            fprintf(f, "    push rax\n");
+            break;
+        case OP_LOAD_QWORD:
+            fprintf(f, "    ; <OP_LOAD_QWORD>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    push qword [r10]\n");
             break;
         case OP_LOAD_ADDR:
             fprintf(f, "    ; <OP_LOAD_ADDR>\n");
