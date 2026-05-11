@@ -1,1 +1,11 @@
-write macro 1 1 syscall3 end
+write macro 
+    1 1 syscall3 
+end
+
+read macro 
+    dup 8 - load 1 -
+    over
+    0 0 syscall3
+    over over + 0 swap set
+    over
+end

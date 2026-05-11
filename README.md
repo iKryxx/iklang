@@ -482,6 +482,26 @@ write macro 1 1 syscall3 end
 "Hello, World!\n" write
 ```
 
+### `read`
+
+Read stdin into a buffer.
+
+```
+read macro 
+    dup 8 - load 1 -
+    over
+    0 0 syscall3
+    over over + 0 swap set
+    over
+end
+```
+
+**Usage:** place an allocated ptr+len pair on the stack, then call `read`.
+
+```
+128 1 mem buf let
+buf read 
+```
 ---
 
 ## Running Tests

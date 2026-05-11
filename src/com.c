@@ -300,7 +300,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 38,
+    _Static_assert(OP_COUNT == 40,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -487,12 +487,23 @@ int compile(da_t *prog) {
             fprintf(f, "    pop r8\n");                    // value
             fprintf(f, "    call set_arr_idx\n");
             break;
-        case OP_LOAD:
-            fprintf(f, "    ; <OP_LOAD>\n");
+        case OP_SET_ADDR:
+            fprintf(f, "    ; <OP_SET_ADDR>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    pop r8\n");
+            fprintf(f, "    mov [r10], r8\n");
+            break;
+        case OP_LOAD_IDENT:
+            fprintf(f, "    ; <OP_LOAD_IDENT>\n");
             fprintf(f, "    mov r10, [res_%s]\n", op->name);  // array base ptr
             fprintf(f, "    pop rsi\n");                   // index
             fprintf(f, "    call load\n");
             fprintf(f, "    push rax\n");
+            break;
+        case OP_LOAD_ADDR:
+            fprintf(f, "    ; <OP_LOAD_ADDR>\n");
+            fprintf(f, "    pop r10\n");
+            fprintf(f, "    push qword [r10]\n");
             break;
         case OP_IDENT:
             break;
