@@ -1,11 +1,27 @@
 write macro 
+    ; call SYS_WRITE on stdout
     1 1 syscall3 
 end
 
-read macro 
-    dup 8 - load 1 -
+read macro
+    ; set up max bytes to write | [buf-8]: size 
+    dup 8 - load
+    ; set up size, buffer stack order 
     over
+    ; call SYS_READ on stdin
     0 0 syscall3
+    ; buf[strlen(buf)] = '\0'
     over over + 0 swap set
+    ; set buf to stack top
     over
+end
+
+strlen macro
+    ; while (str[i] == 0) i++
+    0
+    while over over + l8 0 != do
+        1 +
+    end
+    ; i--
+    1 -
 end
