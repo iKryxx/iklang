@@ -386,6 +386,18 @@ Out-of-bounds access prints an error to stderr and exits with code 1.
 2 nums load dump    -- 30
 ```
 
+#### Operating on raw pointers
+
+If you try to load memory from a raw pointer, you have to specify the stride of the memory.
+
+This is done by using the `l8`, `l16`, `l32` and `l32` keywords.
+
+```
+"Hello, World!" str let
+str     l8 dump  -- 72
+str 1 + l8 dump  -- 101
+```
+
 ---
 
 ### Macros
