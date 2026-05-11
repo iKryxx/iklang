@@ -52,7 +52,7 @@ void tokenize_file(const char *text, const char *filename, da_t *out) {
                 const char *qti = strchr(text + 1, '"');
                 const char *nli = strchr(text + 1, '\n');
                 if(qti == NULL) 
-                    err_throw(ERR_UNCLOSED_STRING_LITERAL, ERR_CTX(new_token,""));
+                    err_throw(ERR_UNCLOSED_STRING_LITERAL, ERR_CTX(new_token, ""));
                 if(nli != NULL && nli < qti) {
                     err_throw(ERR_UNCLOSED_STRING_LITERAL, ERR_CTX(new_token, ""));
                 }
@@ -66,14 +66,30 @@ void tokenize_file(const char *text, const char *filename, da_t *out) {
                 continue;
             }
 
+            if (*text == ';') {
+                const char *nli = strchr(text, '\n');
+                if(nli == NULL)
+                    nli = text + strlen(text);
+                
+                int token_len = (int)(nli - text);
+                text += token_len;
+                col += token_len;
+                continue;
+            }
+
             const char *wsi = strchr(text, ' ');
             const char *nli = strchr(text, '\n');
+            const char *sci = strchr(text, ';');
             if (wsi == NULL)
                 wsi = text + strlen(text);
             if (nli == NULL)
                 nli = text + strlen(text);
+            if (sci == NULL)
+                sci = text + strlen(text);
 
             const char *mini = wsi < nli ? wsi : nli;
+            mini = mini < sci ? mini : sci;
+
             int token_len = (int)(mini - text);
 
             new_token.token_len = token_len;

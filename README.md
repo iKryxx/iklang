@@ -14,6 +14,7 @@ A compiled, stack-based programming language targeting x86-64 Linux. Source file
 - [Quick Start](#quick-start)
 - [Language Reference](#language-reference)
   - [The Stack Model](#the-stack-model)
+  - [Comments](#comments)
   - [Integer Literals](#integer-literals)
   - [String Literals](#string-literals)
   - [Arithmetic](#arithmetic)
@@ -121,6 +122,17 @@ iklc calc.ikl
 iklang is stack-based. Every value is a 64-bit integer. All operations consume values from the top of the stack and push results back. There are no types beyond 64-bit integers — strings and pointers are integers too.
 
 Tokens are separated by whitespace. Execution is left-to-right.
+
+---
+
+### Comments
+
+Comments are sections of the code that are stripped of at the tokenizing step. They begin by writing a ';' character and end at the next newline. 
+
+```
+; This is a comment!
+12 12 + ; This is also a comment!
+```
 
 ---
 
