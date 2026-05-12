@@ -11,6 +11,7 @@ typedef enum {
     OP_MINUS,
     OP_STAR,
     OP_SLASH,
+    OP_PERCENT,
     OP_EQUALS,
     OP_GREATER,
     OP_GREATER_EQUALS,

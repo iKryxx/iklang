@@ -267,7 +267,7 @@ static void parse_file(
 
 
 void parse(da_t *prog, const char *src) {
-    assert(TOKEN_IDENT_COUNT == 35 &&
+    assert(TOKEN_IDENT_COUNT == 36 &&
            "Exhaustive handling of token types inside parse");
 
     *prog = da_new(op_t);
@@ -295,7 +295,7 @@ void parse(da_t *prog, const char *src) {
 }
 
 const char *op_type_name(op_type_t o) {
-    _Static_assert(OP_COUNT == 44,
+    _Static_assert(OP_COUNT == 45,
                    "Exhaustive handling of operator types inside op_type_name");
 
     switch (o) {
@@ -304,6 +304,7 @@ const char *op_type_name(op_type_t o) {
     case OP_MINUS:          return "OP_MINUS";
     case OP_STAR:           return "OP_STAR";
     case OP_SLASH:          return "OP_SLASH";
+    case OP_PERCENT:        return "OP_PERCENT";
     case OP_EQUALS:         return "OP_EQUALS";
     case OP_GREATER:        return "OP_GREATER";
     case OP_GREATER_EQUALS: return "OP_GREATER_EQUALS";
@@ -348,13 +349,14 @@ const char *op_type_name(op_type_t o) {
 }
 
 op_type_t op_name_type(const char *name) {
-    _Static_assert(OP_COUNT == 44,
+    _Static_assert(OP_COUNT == 45,
                    "Exhaustive handling of operator types inside op_name_type");
 
     if (strcmp(name, "+")        == 0) return OP_PLUS;
     if (strcmp(name, "-")        == 0) return OP_MINUS;
     if (strcmp(name, "*")        == 0) return OP_STAR;
     if (strcmp(name, "/")        == 0) return OP_SLASH;
+    if (strcmp(name, "%")        == 0) return OP_PERCENT;
     if (strcmp(name, "=")        == 0) return OP_EQUALS;
     if (strcmp(name, ">")        == 0) return OP_GREATER;
     if (strcmp(name, ">=")       == 0) return OP_GREATER_EQUALS;

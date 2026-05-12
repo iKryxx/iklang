@@ -301,7 +301,7 @@ void append_strings(da_t *prog, FILE *f) {
 }
 
 int compile(da_t *prog) {
-    _Static_assert(OP_COUNT == 44,
+    _Static_assert(OP_COUNT == 45,
                    "Exhaustive operator handling inside compile");
 
     FILE *f = fopen("out.tmp", "w");
@@ -360,7 +360,16 @@ int compile(da_t *prog) {
             fprintf(f, "    idiv rcx\n");
             fprintf(f, "    push rax\n");
             break;
-
+        case OP_PERCENT:
+            fprintf(f, "    ; <OP_PERCENT>\n");
+            fprintf(f, "    pop rcx\n");
+            fprintf(f, "    test rcx, rcx\n");
+            fprintf(f, "    jz div_zero_err\n");
+            fprintf(f, "    pop rax\n");
+            fprintf(f, "    cqo\n");
+            fprintf(f, "    idiv rcx\n");
+            fprintf(f, "    push rdx\n");
+            break;
         case OP_EQUALS:
             fprintf(f, "    ; <OP_EQUALS>\n");
             goto comparison;
