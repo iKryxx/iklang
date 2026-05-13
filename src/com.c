@@ -279,6 +279,8 @@ void append_builtins(FILE *f) {
 void append_bindings(da_t *prog, FILE *f) {
     fprintf(f, "; ----- BINDINGS -----\n");
     fprintf(f, "section .bss\n");
+    fprintf(f, "res_argc resq 1\n");
+    fprintf(f, "res_argv resq 1\n");
     for (size_t i = 0; i < prog->length; i++) {
         op_t *op = (op_t *)da_get(prog, i);
 
@@ -320,6 +322,10 @@ int compile(da_t *prog) {
     append_builtins(f);
     fprintf(f, "global _start\n");
     fprintf(f, "_start:\n");
+    fprintf(f, "    mov rax, [rsp]\n");
+    fprintf(f, "    mov [res_argc], rax\n");
+    fprintf(f, "    lea rax, [rsp+8]\n");
+    fprintf(f, "    mov [res_argv], rax\n");
 
     for (size_t i = 0; i < prog->length; i++) {
         op_t *op = da_get(prog, i);

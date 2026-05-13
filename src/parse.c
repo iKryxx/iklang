@@ -295,6 +295,14 @@ void parse(da_t *prog, const char *src) {
     da_t bindings_list = da_new(char[MAX_IDENTIFIER_LENGTH + 1]);
     bindings_list.compare_cb = &_idx_cmp_char_arr;
     da_t bindings_types = da_new(type_id_t);
+    const char *argc_name = "argc"; type_id_t argc_type = T_INT;
+    const char *argv_name = "argv"; type_id_t argv_type = T_INT; // because its a ptr
+
+    da_push(&bindings_list, argc_name);
+    da_push(&bindings_list, argv_name);
+    da_push(&bindings_types, &argc_type);
+    da_push(&bindings_types, &argv_type);
+
     da_t macros_list = da_new(macro_t);
     macros_list.compare_cb = &_idx_cmp_op_arr_name;
 
