@@ -29,6 +29,7 @@ A compiled, stack-based programming language targeting x86-64 Linux. Source file
   - [Macros](#macros)
   - [Includes](#includes)
   - [Syscalls](#syscalls)
+  - [Command-Line Arguments](#command-line-arguments)
 - [Standard Library](#standard-library)
 - [Running Tests](#running-tests)
 - [Contributing](#contributing)
@@ -510,6 +511,46 @@ To call `syscall3` directly you need the length on the stack:
 ```
 "Hello\n" strlen swap 1 1 syscall3 drop
 --                     ^ fd=1   ^ syscall 1 (write)
+```
+
+---
+
+### Command-Line Arguments
+
+Two bindings are available in every program without declaration:
+
+| Binding | Type    | Value                                         |
+|---------|---------|-----------------------------------------------|
+| `argc`  | integer | number of command-line arguments (including the program name) |
+| `argv`  | integer | pointer to the array of argument string pointers |
+
+`argv` is a flat array of 8-byte pointers. To get the string pointer for argument `i`, read 8 bytes at `argv + 8 * i`:
+
+```
+argv 8 i * + l64
+```
+
+Full example (`examples/arguments.ikl`) — print every argument on its own line:
+
+```
+"std.ikl" include
+
+0 i let
+
+while i argc < do
+    argv 8 i * + l64 print
+    "\n" print
+
+    i 1 + i set
+end
+```
+
+```sh
+iklc examples/arguments.ikl
+./out hello world
+# ./out
+# hello
+# world
 ```
 
 ---
