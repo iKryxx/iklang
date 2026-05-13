@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
     }
     
     parse(&prog, file);
+    type_check(&prog);
     compile(&prog);
 
     return 0;

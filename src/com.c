@@ -554,7 +554,6 @@ int compile(da_t *prog) {
         case OP_STRING_LITERAL:
             fprintf(f, "    ; <OP_STRING_LITERAL>\n");
             fprintf(f, "    mov rdx, %zu\n", unescape_byte_count(op->str_literal));
-            fprintf(f, "    push rdx\n");
             fprintf(f, "    push strlit_%zu\n", i);
             break;
         case OP_SYSCALL3:

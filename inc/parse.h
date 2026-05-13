@@ -54,9 +54,17 @@ typedef enum {
     OP_COUNT
 } op_type_t;
 
+typedef enum {
+    T_INT,
+    T_STRING_LIT,
+    T_UNKNOWN,
+    T_COUNT
+} type_id_t;
+
 typedef struct {
     op_type_t type;
     char name[MAX_IDENTIFIER_LENGTH + 1];
+    type_id_t value_type;
     union {
         long long ival;
         size_t jmp_addr;
@@ -74,5 +82,11 @@ void parse(da_t *prog, const char *src);
 const char *op_type_name(op_type_t o);
 
 op_type_t op_name_type(const char *name);
+
+void type_check(da_t *prog);
+
+const char *type_id_name(type_id_t t);
+
+type_id_t name_type_id(const char *name);
 
 #endif

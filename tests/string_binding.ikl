@@ -1,2 +1,6 @@
-"hello\n" s_ptr let s_len let
-s_len s_ptr 1 1 syscall3
+"std.ikl" include
+
+"hello\n" s_ptr let 
+s_ptr strlen s_len let drop
+
+s_len s_ptr write drop

@@ -1,1 +1,3 @@
-"line1\nline2\n" 1 1 syscall3
+"std.ikl" include
+
+"line1\nline2\n" print

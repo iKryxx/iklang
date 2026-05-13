@@ -1,10 +1,9 @@
-"Hello, What is your name?\n> " 1 1 syscall3 
+"std.ikl" include
 
-512 1 mem buf let
-0 buf_n let
+"Hello, What is your name?\n> " print
 
-buf 0 0 syscall3 buf_n set
-0 buf_n buf load set
+128 1 mem buf let 
+buf read drop drop
 
-"Greetings, " 1 1 syscall3
-buf 1 1 syscall3 
+"Greetings, " print 
+buf print

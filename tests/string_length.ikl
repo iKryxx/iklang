@@ -1,4 +1,5 @@
+"std.ikl" include
 "hello" p1 let
-dump
+p1 strlen dump drop
 "Hello, World!" p2 let
-dump
+p2 strlen dump drop

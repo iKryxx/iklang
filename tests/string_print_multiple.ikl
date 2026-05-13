@@ -1,2 +1,4 @@
-"foo\n" 1 1 syscall3
-"bar\n" 1 1 syscall3
+"std.ikl" include
+
+"foo\n" strlen swap 1 1 syscall3 drop
+"bar\n" strlen swap 1 1 syscall3 drop

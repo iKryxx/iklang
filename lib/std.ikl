@@ -13,7 +13,7 @@ read macro
     ; buf[strlen(buf)] = '\0'
     over over + 0 swap set
     ; set buf to stack top
-    over
+    ; over
 end
 
 strlen macro
@@ -22,6 +22,12 @@ strlen macro
     while over over + l8 0 != do
         1 +
     end
-    ; i--
-    1 -
+end
+
+print macro
+    ; get strlen(str)
+    strlen
+    swap
+    1 1 syscall3
+    drop
 end

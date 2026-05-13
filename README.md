@@ -14,6 +14,7 @@ A compiled, stack-based programming language targeting x86-64 Linux. Source file
 - [Quick Start](#quick-start)
 - [Language Reference](#language-reference)
   - [The Stack Model](#the-stack-model)
+  - [Type Checking](#type-checking)
   - [Comments](#comments)
   - [Integer Literals](#integer-literals)
   - [String Literals](#string-literals)
@@ -94,7 +95,7 @@ Create `hello.ikl`:
 ```
 "std.ikl" include
 
-"Hello, World!\n" write
+"Hello, World!\n" print
 ```
 
 Compile and run:
@@ -103,6 +104,8 @@ Compile and run:
 iklc hello.ikl
 ./out
 ```
+
+> `write` expects an explicit `(len, ptr)` pair on the stack. For string literals use `print`, which computes the length automatically.
 
 Without the standard library:
 
@@ -119,9 +122,29 @@ iklc calc.ikl
 
 ### The Stack Model
 
-iklang is stack-based. Every value is a 64-bit integer. All operations consume values from the top of the stack and push results back. There are no types beyond 64-bit integers — strings and pointers are integers too.
+iklang is stack-based. Every value is a 64-bit integer on the hardware stack. All operations consume values from the top and push results back.
 
 Tokens are separated by whitespace. Execution is left-to-right.
+
+---
+
+### Type Checking
+
+The compiler performs static type checking after parsing, before code generation. Two types exist:
+
+| Type           | Produced by                                 |
+|----------------|---------------------------------------------|
+| `T_INT`        | integer literals, arithmetic results        |
+| `T_STRING_LIT` | string literals                             |
+
+`T_STRING_LIT` is integer-compatible: it can be used wherever an integer is expected (arithmetic, comparisons, `dump`, syscall arguments, etc.).
+
+Type errors are reported at compile time:
+
+- **Stack underflow** — an operation needs more values than are present.
+- **Type mismatch** — an operation receives a value of the wrong type.
+- **Branch mismatch** — `if`/`else` branches or a `while` body leave the stack in different states.
+- **Non-empty stack** — values remain on the stack when execution ends.
 
 ---
 
@@ -149,10 +172,10 @@ An integer literal pushes its value onto the stack.
 
 ### String Literals
 
-A quoted string `"..."` pushes two values: the byte length below, and the pointer on top.
+A quoted string `"..."` pushes the pointer to the string data onto the stack. The pushed value has type `T_STRING_LIT`.
 
 ```
-"Hello\n"   -- stack: [6, ptr]   (ptr on top)
+"Hello\n"   -- stack: [ptr]
 ```
 
 Supported escape sequences: `\n` `\t` `\r` `\0` `\\` `\"`
@@ -171,8 +194,9 @@ All arithmetic operations pop two values (right operand on top) and push one res
 | `-`   | subtraction        | `a b -` → `a-b`              |
 | `*`   | multiplication     | `a b *` → `a*b`              |
 | `/`   | integer division   | `a b /` → `a/b`              |
+| `%`   | modulo             | `a b %` → `a%b`              |
 
-Division by zero prints an error to stderr and exits with code 1.
+Division or modulo by zero prints an error to stderr and exits with code 1.
 
 ```
 10 3 - dump    -- prints 7
@@ -471,15 +495,21 @@ Push operands in reverse (last arg first):
 -- write(1, ptr, len)  →  syscall 1, rdi=1, rsi=ptr, rdx=len
 -- push order: rdx(len), rsi(ptr), rdi(fd), rax(syscall_nr)
 
-"Hello\n" 1 1 syscall3
+len ptr 1 1 syscall3 drop
 ```
 
-Because a string literal already pushes `(len, ptr)` with ptr on top, and `syscall3` pops `rax`, `rdi`, `rsi`, `rdx` in that order, writing a string to stdout is:
+String literals push only the pointer, so the length must be provided separately. The easiest way to write a string to stdout is the `print` macro from `std.ikl`, which calls `strlen` internally:
 
 ```
-"Hello\n" 1 1 syscall3
---           ^ fd=1 (stdout)
---             ^ syscall 1 (write)
+"std.ikl" include
+"Hello\n" print
+```
+
+To call `syscall3` directly you need the length on the stack:
+
+```
+"Hello\n" strlen swap 1 1 syscall3 drop
+--                     ^ fd=1   ^ syscall 1 (write)
 ```
 
 ---
@@ -494,17 +524,19 @@ The file `lib/std.ikl` is installed to `$(PREFIX)/lib/iklang/std.ikl`. Include i
 
 ### `write`
 
-Writes a string to stdout.
+Writes bytes to stdout. Expects `len` below `ptr` on the stack (ptr on top), and leaves the syscall return value on the stack.
 
 ```
 write macro 1 1 syscall3 end
 ```
 
-**Usage:** place a string literal (or a ptr+len pair) on the stack, then call `write`.
+**Usage:** push `len` then `ptr`, then call `write`. Drop the return value if unneeded.
 
 ```
-"Hello, World!\n" write
+14 "Hello, World!\n" write drop
 ```
+
+For string literals, prefer `print`, which computes the length automatically.
 
 ### `read`
 
@@ -529,7 +561,7 @@ buf read
 
 ### `strlen`
 
-Pushes the length of a string on top of the stack.
+Pushes the length (in bytes) of a null-terminated string onto the stack, leaving the original pointer below.
 
 ```
 strlen macro
@@ -537,14 +569,32 @@ strlen macro
     while over over + l8 0 != do
         1 +
     end
-    1 -
 end
 ```
 
-**Usage:** place a string literal on the stack, then call `strlen`.
+**Usage:** place a string pointer on the stack, then call `strlen`. Stack effect: `( ptr -- ptr len )`.
 
 ```
-"Hello, World!" strlen
+"Hello, World!" strlen   -- stack: [ptr, 13]
+```
+
+### `print`
+
+Writes a null-terminated string to stdout. Computes the length with `strlen`, then calls `write`. Discards the syscall return value.
+
+```
+print macro
+    strlen
+    swap
+    1 1 syscall3
+    drop
+end
+```
+
+**Usage:** place a string pointer on the stack, then call `print`.
+
+```
+"Hello, World!\n" print
 ```
 
 ---

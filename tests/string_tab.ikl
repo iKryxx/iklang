@@ -1,1 +1,3 @@
-"a\tb\n" 1 1 syscall3
+"std.ikl" include
+
+"a\tb\n" print
